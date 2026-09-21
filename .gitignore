@@ -1,0 +1,18 @@
+# Generated dependencies and build output
+frontend/node_modules/
+frontend/dist/
+backend/target/
+
+# Local settings, secrets, and temporary user files
+.env
+.env.*
+!.env.example
+backend/.storage/
+*.log
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+test-results/
+playwright-report/

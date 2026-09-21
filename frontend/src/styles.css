@@ -1,0 +1,54 @@
+/* Shared tokens keep the interface consistent as room and upload views arrive. */
+:root { font-family: Inter, "Segoe UI", Arial, sans-serif; color: #162834; background: #f3f5f7; font-synthesis: none; --ink: #162834; --muted: #526371; --line: #dce3e8; --accent: #1467c9; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 280px; }
+button, input { font: inherit; }
+button { cursor: pointer; }
+button:focus-visible, a:focus-visible { outline: 3px solid #1977e5; outline-offset: 5px; }
+.app-shell { max-width: 1220px; margin: auto; padding: 0 44px; }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 32px 0; }
+.wordmark { display: inline-flex; align-items: center; text-decoration: none; color: var(--ink); font-size: 1.5rem; font-weight: 750; letter-spacing: -0.05em; }
+.wordmark > span:first-child { font-weight: 400; }
+.brand-mark { margin-left: 10px; padding: 1px 8px; border: 1px solid #acbac4; border-radius: 7px; font-size: 1.25rem; }
+.build-label, .step-label { font-size: .875rem; color: var(--muted); }
+.workspace { display: grid; grid-template-columns: .86fr 1.3fr; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: white; }
+.intro { background: var(--ink); color: white; padding: 44px 36px; display: flex; flex-direction: column; }
+.eyebrow, .small-label { font-size: .75rem; letter-spacing: .12em; font-weight: 650; }
+.intro .eyebrow { color: #b6c9d8; }
+h1 { font-size: clamp(2rem, 3.4vw, 2.85rem); line-height: 1.14; letter-spacing: -.045em; font-weight: 550; margin: 30px 0 20px; }
+.intro p { color: #c0d0da; font-size: 1rem; line-height: 1.7; max-width: 30ch; margin: 0; }
+.intro-bottom { margin-top: auto; padding-top: 76px; }
+.intro-bottom .small-label { display: block; color: #b6c9d8; margin-bottom: 14px; }
+.intro-bottom p { color: #f0f5f8; }
+.development-note { display: block; margin-top: 26px; color: #b6c9d8; font-size: .875rem; line-height: 1.6; }
+.main-panel { padding: 38px 42px; min-width: 0; }
+.panel-heading { display: flex; justify-content: space-between; gap: 16px; align-items: center; }
+.panel-heading .eyebrow { color: var(--muted); }
+h2 { font-size: 1.9rem; letter-spacing: -.04em; font-weight: 600; margin: 28px 0 9px; }
+.panel-description { color: var(--muted); font-size: 1rem; line-height: 1.5; margin: 0 0 25px; }
+.connection-card { padding: 24px; border-radius: 12px; border: 1px solid #cfdeee; background: #f5f9fe; }
+.status-heading { display: flex; align-items: center; gap: 9px; color: #445d75; }
+.status-dot { width: 8px; height: 8px; background: #718396; border-radius: 50%; flex-shrink: 0; }
+.status-dot.connected { background: #168052; }
+.status-dot.error { background: #b33535; }
+.status-dot.checking { background: #1467c9; }
+.connection-card h3 { font-size: 1.125rem; margin: 18px 0 8px; font-weight: 600; }
+.connection-card p { font-size: .9375rem; line-height: 1.6; color: #43586a; margin: 0; min-height: 3.2em; }
+.connection-card.error { background: #fff7f7; border-color: #eacaca; }
+.primary-button { background: var(--accent); color: white; border: none; border-radius: 7px; padding: 12px 16px; min-height: 46px; display: flex; align-items: center; justify-content: space-between; gap: 35px; margin-top: 22px; font-size: .9375rem; font-weight: 600; }
+.primary-button:hover { background: #1056a8; }
+.primary-button:disabled { opacity: .7; cursor: wait; }
+.next-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 28px 0 16px; }
+.next-heading h3 { font-size: 1rem; margin: 0; font-weight: 600; }
+.coming-label { font-size: .8125rem; color: var(--muted); background: #eef2f5; border-radius: 4px; padding: 4px 8px; }
+.room-options { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 10px; }
+.room-option { padding: 20px; min-width: 0; }
+.room-option + .room-option { border-left: 1px solid var(--line); }
+.option-number { font-size: .8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.room-option h4 { font-size: 1rem; margin: 12px 0 7px; font-weight: 600; }
+.room-option p { font-size: .875rem; color: var(--muted); line-height: 1.6; margin: 0; }
+.footnote { font-size: .8125rem; line-height: 1.6; color: var(--muted); margin: 14px 0 0; }
+.footer { display: flex; justify-content: space-between; gap: 16px; padding: 24px 0; color: var(--muted); font-size: .8125rem; }
+/* Stack the same workspace on phones; no separate mobile application needed. */
+@media (max-width: 800px) { .app-shell { padding: 0 20px; } .workspace { grid-template-columns: 1fr; } .intro { padding: 28px; } h1 { margin-top: 20px; } .intro-bottom { display: none; } .intro p { max-width: none; } .main-panel { padding: 28px; } }
+@media (max-width: 420px) { .app-shell { padding: 0 12px; } .topbar { padding: 22px 4px; flex-wrap: wrap; gap: 10px; } .intro, .main-panel { padding: 24px 20px; } h2 { font-size: 1.6rem; } .connection-card { padding: 18px; } .room-options { grid-template-columns: 1fr; } .room-option + .room-option { border-left: none; border-top: 1px solid var(--line); } .primary-button { width: 100%; } }
