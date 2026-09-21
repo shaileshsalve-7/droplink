@@ -41,7 +41,7 @@ class HealthEndpointTest {
     }
 
     @Test
-    void unimplementedRoomsDoNotReturnFakeSuccess() throws Exception {
-        assertThat(get("/api/rooms").statusCode()).isEqualTo(404);
+    void roomDirectoryIsNotExposed() throws Exception {
+        assertThat(get("/api/rooms").statusCode()).isEqualTo(405);
     }
 }

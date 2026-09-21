@@ -31,5 +31,5 @@ what I learned, and future work. Clearly distinguish implemented from planned.
 No public deployment before Day 8. Do not claim GitHub publication without a
 successful push to a user-specified repository.
 
-Current checkpoint: Day 1 source written; consult docs/verification-day-01.md
-for the final verification result. Day 2 is not authorized yet.
+Current checkpoint: Day 2 implemented; consult docs/verification-day-02.md
+for verification and manual-check limits. Day 3 is not authorized yet.

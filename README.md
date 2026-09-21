@@ -2,9 +2,9 @@
 
 Temporary file sharing between phone and laptop, without cluttering a chat.
 
-**Status: Day 1 of 8 — setup and architecture.** This build checks the backend
-connection. It does not create rooms or transfer files yet. Deployment is planned
-for September 28, 2026, after the earlier milestones are completed.
+**Status: Day 2 of 8 — temporary rooms.** Create a room, join with its code,
+check membership, and leave. Rooms expire after 30 minutes by default. QR links
+and file transfer are still planned. Deployment is planned for September 28, 2026.
 
 ## Problem
 
@@ -24,7 +24,9 @@ the room and deletes its temporary files. No account is planned for the MVP.
 | Responsive React workspace | Implemented |
 | Spring Boot health API and connection check | Implemented |
 | Loading, failure, retry, and timeout states | Implemented |
-| Room creation, joining, and expiry | Planned: September 22 |
+| Room creation, joining, expiry, and leaving | Implemented |
+| Member access tokens, room/member caps, and admission throttling | Implemented |
+| Tab session recovery and manual room status refresh | Implemented |
 | QR codes and join links | Planned: September 23 |
 | PDFs, documents, images, ZIPs, and code files | Planned: September 24 |
 | Bidirectional sharing and live updates | Planned: September 25 |
@@ -37,18 +39,18 @@ the room and deletes its temporary files. No account is planned for the MVP.
 - Frontend: React 19.3.0, Vite 8.3.0, JavaScript, CSS.
 - Backend: Spring Boot 4.1.1, Java 17 language target, Maven Wrapper 3.9.16.
 - Real-time: Spring WebSocket dependency installed; endpoint comes on Day 5.
-- Planned storage: in-memory room metadata and a server-local temporary directory.
-- Tests: Node's built-in test runner and JUnit/Spring Boot integration tests.
+- Storage: in-memory room metadata implemented; server-local temporary file storage planned.
+- Tests: Node's test runner, Vitest/Testing Library with jsdom, and JUnit/Spring Boot tests.
 
 JavaScript is intentional: there is no extra TypeScript learning requirement on Day 1.
 No database, Docker, accounts, or cloud services are needed to run this checkpoint.
 
 ## Architecture
 
-Current request path: browser → Vite development proxy → Spring Boot health controller.
+Current request path: browser → Vite development proxy → Spring Boot controllers → room service.
 The browser requests `/api/health`. Vite forwards that request to port 8080. Spring
-returns JSON; React uses it to display connection status. This checks reachability,
-not file storage or any future sharing feature.
+returns JSON; React uses it to display connection status. This checks reachability. Room requests use `/api/rooms`; their service stores
+bounded, temporary metadata in memory and checks member credentials and expiry.
 
 Planned MVP:
 
@@ -95,8 +97,10 @@ npm ci
 npm run dev
 ```
 
-Open [localhost:5173](http://localhost:5173) and press **Check connection**.
-Expect **Server is reachable**. Keep both terminals open. Stop a server with Ctrl+C.
+Open [localhost:5173](http://localhost:5173), press **Create room**, then join using
+the code from a separate browser or device. Press **Refresh status** to see joined
+sessions. Keep both terminals open. Stop a server with Ctrl+C. The health check
+remains available under **Check server connection**.
 
 On macOS/Linux use `./mvnw` wherever these instructions use `.\mvnw.cmd`.
 If necessary run `chmod +x mvnw` once inside `backend` after extracting the ZIP.
@@ -126,11 +130,23 @@ npm run build
 Backend packaging creates `backend/target/droplink-0.1.0-SNAPSHOT.jar`. Frontend
 building creates `frontend/dist/`. Neither output should be committed.
 `vite preview` only previews static output: it is not the configured development
-API proxy and is not a production deployment. For Day 1 use `npm run dev`.
+API proxy and is not a production deployment. For local development use `npm run dev`.
 
 For manual success/failure checks, phone access, IntelliJ breakpoints, and common
 errors, follow [the Day 1 lesson](docs/day-01.md). See
-[recorded verification](docs/verification-day-01.md) for checks actually run.
+[Day 1 verification](docs/verification-day-01.md) for its recorded checks.
+
+Follow [the Day 2 lesson](docs/day-02.md) for room behavior, API details, tests,
+debugging, and Git commands. [Day 2 verification](docs/verification-day-02.md) records
+what passed and what still needs manual browser/device checks. After packaging,
+run `node scripts/smoke-day2.mjs` from the repository root for the live API smoke test.
+
+Rooms default to 30 minutes (`ROOM_TTL`, e.g. `PT10S` for a local expiry check),
+100 active rooms, and eight members per room. Joining never extends expiry. Tokens
+are stored in tab session storage; treat codes and tokens as secrets. Status counts
+joined sessions, not online devices. Use one backend instance; restart clears rooms.
+Anyone with a code can join. The server can read future uploads; this is not
+end-to-end encryption. Do not deploy this development checkpoint publicly yet.
 
 ## What I learned
 
@@ -142,6 +158,14 @@ Day 1 learning notes to review by tracing the running application:
 - A Vite proxy gives the browser one local origin during development.
 - A Maven Wrapper and npm lockfile make setup more reproducible.
 - A successful build, an API test, and a browser check prove different things.
+
+Day 2 adds these learning topics:
+
+- A join code admits a session; its bearer token authorizes later requests.
+- Checking expiry on access prevents a late cleanup task from extending access.
+- Synchronization keeps concurrent capacity checks and inserts consistent.
+- A saved browser session must be revalidated after reload or backend restart.
+- Simulated DOM tests, HTTP tests, and real-device checks prove different things.
 
 This project is being built with AI assistance. These notes describe lesson topics,
 not a claim that I independently wrote or mastered every component. I will add my
@@ -164,7 +188,8 @@ git clone https://github.com/shaileshsalve-7/droplink.git
 cd droplink
 ```
 
-Daily commands and the implementation commit message are in [Day 1](docs/day-01.md).
+Daily commands and implementation commit messages are in [Day 1](docs/day-01.md)
+and [Day 2](docs/day-02.md).
 The earlier downloadable Git bundle is an offline checkpoint; use a fresh GitHub
 clone for future work so your local history matches the published repository.
 

@@ -52,3 +52,32 @@ h2 { font-size: 1.9rem; letter-spacing: -.04em; font-weight: 600; margin: 28px 0
 /* Stack the same workspace on phones; no separate mobile application needed. */
 @media (max-width: 800px) { .app-shell { padding: 0 20px; } .workspace { grid-template-columns: 1fr; } .intro { padding: 28px; } h1 { margin-top: 20px; } .intro-bottom { display: none; } .intro p { max-width: none; } .main-panel { padding: 28px; } }
 @media (max-width: 420px) { .app-shell { padding: 0 12px; } .topbar { padding: 22px 4px; flex-wrap: wrap; gap: 10px; } .intro, .main-panel { padding: 24px 20px; } h2 { font-size: 1.6rem; } .connection-card { padding: 18px; } .room-options { grid-template-columns: 1fr; } .room-option + .room-option { border-left: none; border-top: 1px solid var(--line); } .primary-button { width: 100%; } }
+
+/* Day 2 uses the same visual language for real room actions. */
+.room-workspace h2:focus { outline: none; }
+.create-room-card, .room-code-card { border: 1px solid #cfdeee; border-radius: 12px; background: #f5f9fe; padding: 24px; }
+.create-room-card h3 { font-size: 1.2rem; margin: 16px 0 8px; }
+.create-room-card p { color: var(--muted); line-height: 1.6; margin: 0; }
+.join-room-form { margin-top: 28px; }
+.join-room-form label { font-weight: 600; }
+.join-room-form .footnote { margin: 8px 0 12px; }
+.join-controls, .room-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.join-controls input { flex: 1 1 160px; width: 100%; min-width: 0; border: 1px solid #9cadba; padding: 12px; border-radius: 7px; font: inherit; text-transform: uppercase; letter-spacing: .1em; }
+input:focus-visible, summary:focus-visible { outline: 3px solid #1977e5; outline-offset: 3px; }
+.secondary-button, .text-button { padding: 11px 16px; min-height: 46px; border-radius: 7px; border: 1px solid #9cadba; background: white; color: var(--ink); font-weight: 600; }
+.secondary-button:hover { background: #eef3f8; }
+.text-button { border-color: transparent; background: transparent; text-decoration: underline; }
+button:disabled { cursor: wait; opacity: .65; }
+.room-code { font-size: clamp(1.45rem, 4vw, 2.4rem); font-weight: 700; letter-spacing: .08em; font-variant-numeric: tabular-nums; margin: 18px 0; overflow-wrap: anywhere; user-select: all; }
+.room-details { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0 0; }
+.room-details dt { font-size: .8125rem; color: var(--muted); }
+.room-details dd { margin: 7px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.room-actions { margin-top: 20px; }
+.room-error, .room-notice { padding: 14px; border-radius: 7px; font-size: .9375rem; line-height: 1.5; }
+.room-error { background: #fff1f1; color: #922525; border: 1px solid #eacaca; }
+.room-notice { background: #eef3f8; color: #304b61; }
+.room-next { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 18px; color: var(--muted); font-size: .875rem; line-height: 1.6; }
+.server-diagnostics { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 18px; }
+.server-diagnostics summary { cursor: pointer; color: var(--muted); font-size: .875rem; padding: 8px 0; }
+.server-diagnostics .connection-card { margin-top: 12px; }
+@media (max-width: 420px) { .create-room-card, .room-code-card { padding: 18px; } .join-controls .secondary-button { width: 100%; } }

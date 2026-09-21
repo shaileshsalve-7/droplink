@@ -1,7 +1,8 @@
-# Architecture decisions — Day 1
+# Architecture decisions — Day 2
 
-Everything below is a planned constraint unless explicitly marked implemented.
-The Day 1 health endpoint is the only implemented API.
+Day 2 implements room creation/joining, member authentication for status/leave,
+expiry, and bounded in-memory room state. File storage, QR links, and WebSockets
+below remain planned constraints. See `day-02.md` for the implemented HTTP contract.
 
 ## One repository, two applications
 
@@ -18,7 +19,7 @@ Uploads must finish successfully before metadata is published to other members.
 
 ## Rooms and privacy
 
-- Proposed default expiry: 30 minutes from creation, enforced by the server.
+- Implemented default expiry: 30 minutes from creation, enforced by the server.
 - Use a cryptographically generated eight-character room code, excluding confusing
   characters. A code grants access: anyone holding it may join.
 - Codes and QR invitations need rate-limited join attempts and expiry checks.
@@ -30,7 +31,18 @@ Uploads must finish successfully before metadata is published to other members.
 - HTTPS/WSS is required in production. The server can read the files; do not label
   this design end-to-end encrypted or anonymous.
 
-Exact endpoint and credential details will be settled and tested on Day 2/3.
+Implemented: 30-minute fixed expiry, eight-character SecureRandom codes, distinct
+256-bit member tokens, 100-room and eight-member limits, synchronized admission,
+and cleanup every 30 seconds plus on access. Last-member leave removes a room.
+HTTP status and leave require a bearer token; responses use `Cache-Control: no-store`.
+Admission POST requests are limited to 30 per peer and 300 globally per minute,
+including malformed attempts. Fixed windows can burst at boundaries. The app
+ignores forwarded IP headers; all devices behind the development proxy share a
+peer quota. Configure trusted proxy handling and edge abuse limits before deploy.
+Frontend credentials live in tab session storage, are validated after reload, and
+are cleared on expiry/leave. Same-origin scripts can read them; avoid untrusted
+scripts and review CSP before production. Closed tabs can leave membership slots
+until expiry. Member count is a snapshot of sessions, not online presence.
 Do not expose an unauthenticated file endpoint while building later milestones.
 
 ## Temporary storage
@@ -40,9 +52,10 @@ dedicated temporary directory. Run one backend instance. Restart invalidates roo
 startup cleanup must remove orphaned DropLink files without touching unrelated paths.
 
 Proposed initial bounds: 25 MiB per file, 100 MiB per room, 20 files per room,
-100 active rooms, and 1 GiB total disk quota. Enforce count/byte reservations against
+and 1 GiB total disk quota. The 100-active-room cap is already implemented.
+Enforce file count/byte reservations against
 concurrent uploads, not just separate preflight checks. Reject overload cleanly.
-These are design defaults, not implemented limits or tested capacity claims.
+The file and disk bounds are design defaults, not implemented limits or tested capacity claims.
 
 Expiry is checked on each access, not only by the cleanup job. Expired rooms stop
 accepting new requests immediately. Cleanup should run at most every minute and

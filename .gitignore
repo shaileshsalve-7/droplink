@@ -16,3 +16,6 @@ backend/.storage/
 Thumbs.db
 test-results/
 playwright-report/
+
+.vitest/
+coverage/
