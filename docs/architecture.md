@@ -1,7 +1,8 @@
-# Architecture decisions — Day 2
+# Architecture decisions — Day 3
 
 Day 2 implements room creation/joining, member authentication for status/leave,
-expiry, and bounded in-memory room state. File storage, QR links, and WebSockets
+expiry, and bounded in-memory room state. Day 3 adds client-generated QR codes
+and fragment-based join links with explicit admission. File storage and WebSockets
 below remain planned constraints. See `day-02.md` for the implemented HTTP contract.
 
 ## One repository, two applications
@@ -44,6 +45,17 @@ are cleared on expiry/leave. Same-origin scripts can read them; avoid untrusted
 scripts and review CSP before production. Closed tabs can leave membership slots
 until expiry. Member count is a snapshot of sessions, not online presence.
 Do not expose an unauthenticated file endpoint while building later milestones.
+
+## Implemented invitations (Day 3)
+
+Links use the current page's HTTP(S) address plus `#join=CODE`; member tokens never
+appear in the payload. React consumes the fragment and clears it from the current
+history entry. Users explicitly join using the same backend admission endpoint.
+Existing membership is preserved when another invitation opens. Loopback/wildcard
+addresses do not offer QR/link sharing; local phone testing uses the laptop's LAN
+address. QR generation runs locally as SVG with a four-module quiet zone. No
+external QR service receives the code. Fragments remain visible to browser scripts
+and copied links, so this is log minimization, not encryption.
 
 ## Temporary storage
 

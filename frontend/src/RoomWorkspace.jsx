@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { createRoom, joinRoom, inspectRoom, leaveRoom, normalizeCode, validCode } from './api/rooms.js';
 import { loadSession, saveSession } from './roomSession.js';
+import { readInvitation } from './api/invitations.js';
+import RoomInvite from './RoomInvite.jsx';
 
 export default function RoomWorkspace() {
   const [membership, setMembership] = useState(loadSession);
@@ -11,6 +13,8 @@ export default function RoomWorkspace() {
   const [remaining, setRemaining] = useState(null);
   const [verified, setVerified] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [invitedCode, setInvitedCode] = useState('');
+  const [invitationError, setInvitationError] = useState('');
   const active = useRef(null);
   const heading = useRef(null);
   const initial = useRef(membership);
@@ -30,7 +34,7 @@ export default function RoomWorkspace() {
       if (action === 'create' || action === 'join') {
         const result = action === 'create' ? await createRoom(controller.signal) : await joinRoom(code, controller.signal);
         if (controller.signal.aborted) return;
-        remember(result); setVerified(true); setCode('');
+        remember(result); setVerified(true); setCode(''); setInvitedCode(''); setInvitationError('');
       } else if (action === 'leave') {
         await leaveRoom(saved, controller.signal);
         if (controller.signal.aborted) return;
@@ -56,6 +60,25 @@ export default function RoomWorkspace() {
       }
     }
   }
+
+  useEffect(() => {
+    function consumeInvitation() {
+      const invitation = readInvitation(window.location.hash);
+      if (invitation.kind === 'none') return;
+      // Remove the invitation from this history entry after capturing it. Keep
+      // it only in component state; reload need not re-open an old invitation.
+      window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
+      if (invitation.kind === 'invalid') {
+        setInvitedCode('');
+        setInvitationError('This invitation link is invalid. Ask for a new link or enter the room code.');
+      } else {
+        setInvitationError(''); setInvitedCode(invitation.code); setCode(invitation.code);
+      }
+    }
+    consumeInvitation();
+    window.addEventListener('hashchange', consumeInvitation);
+    return () => window.removeEventListener('hashchange', consumeInvitation);
+  }, []);
 
   useEffect(() => {
     if (initial.current) perform('restore', initial.current);
@@ -101,6 +124,11 @@ export default function RoomWorkspace() {
     <h2 ref={heading} tabIndex={-1}>{room ? (verified ? 'Your room is ready.' : 'Check your room.') : 'Bring your devices together.'}</h2>
     {notice && <p className="room-notice" role="status">{notice}</p>}
     {error && <p className="room-error" role="alert">{error}</p>}
+    {invitationError && <p className="room-error" role="alert">{invitationError}</p>}
+    {invitedCode && <div className="invitation-banner" role="status">
+      <p>{room ? (room.code === invitedCode ? 'You already have a session for this invitation. Check its status below.' : `Invitation for ${invitedCode}. Leave your current room first, then press Join room.`) : `Invitation for ${invitedCode} is ready. Press Join room to connect.`}</p>
+      <button className="text-button" disabled={Boolean(pending)} onClick={() => { setInvitedCode(''); setCode(''); }}>Dismiss invitation</button>
+    </div>}
     {room ? <>
       <p className="panel-description">Enter this code on your other device.</p>
       <div className="room-code-card">
@@ -109,6 +137,7 @@ export default function RoomWorkspace() {
         <button className="secondary-button" onClick={copyCode}>{copied ? 'Copied' : 'Copy code'}</button>
         <p className="footnote">Anyone with this code can join. Share it privately.</p>
       </div>
+      {verified && <RoomInvite key={room.id} code={room.code} />}
       <dl className="room-details">
         <div><dt>Joined sessions</dt><dd>{verified ? `${room.memberCount} / ${room.maxMembers}` : 'Not verified'}</dd></div>
         <div><dt>Time remaining</dt><dd>{remaining === null ? 'Checking…' : `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`}</dd></div>
@@ -118,7 +147,7 @@ export default function RoomWorkspace() {
         <button className="secondary-button" disabled={Boolean(pending)} onClick={() => perform('refresh')}>{pending === 'refresh' || pending === 'restore' ? 'Checking…' : 'Refresh status'}</button>
         <button className="text-button" disabled={Boolean(pending)} onClick={() => perform('leave')}>{pending === 'leave' ? 'Leaving…' : 'Leave room'}</button>
       </div>
-      <p className="room-next">Room connected. QR links and file sharing are coming in later builds.</p>
+      <p className="room-next">Room connected. File sharing is coming in a later build.</p>
     </> : <>
       <p className="panel-description">Start a temporary room, or enter a code from another device.</p>
       <div className="create-room-card">
@@ -130,7 +159,7 @@ export default function RoomWorkspace() {
         <label htmlFor="room-code">Have a room code?</label>
         <p id="code-help" className="footnote">Enter all eight characters. For example, ABCD-2345.</p>
         <div className="join-controls">
-          <input id="room-code" value={code} onChange={event => setCode(event.target.value)} maxLength={32} autoComplete="off" autoCapitalize="characters" spellCheck={false} placeholder="ABCD-2345" aria-describedby="code-help" disabled={Boolean(pending)} required />
+          <input id="room-code" value={code} onChange={event => { setCode(event.target.value); setInvitedCode(''); setInvitationError(''); }} maxLength={32} autoComplete="off" autoCapitalize="characters" spellCheck={false} placeholder="ABCD-2345" aria-describedby="code-help" disabled={Boolean(pending)} required />
           <button className="secondary-button" type="submit" disabled={Boolean(pending)}>{pending === 'join' ? 'Joining…' : 'Join room'}</button>
         </div>
       </form>

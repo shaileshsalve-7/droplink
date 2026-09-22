@@ -81,3 +81,13 @@ button:disabled { cursor: wait; opacity: .65; }
 .server-diagnostics summary { cursor: pointer; color: var(--muted); font-size: .875rem; padding: 8px 0; }
 .server-diagnostics .connection-card { margin-top: 12px; }
 @media (max-width: 420px) { .create-room-card, .room-code-card { padding: 18px; } .join-controls .secondary-button { width: 100%; } }
+
+/* QR invitations stay high contrast and fit inside the existing room panel. */
+.room-invite { margin-top: 24px; border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+.room-invite h3 { margin: 0; font-size: 1.125rem; }
+.qr-frame { display: flex; justify-content: center; background: white; margin: 16px 0; }
+.qr-frame svg { display: block; max-width: 100%; height: auto; }
+.join-link { display: block; width: 100%; min-width: 0; margin: 10px 0 12px; padding: 12px; border: 1px solid #9cadba; border-radius: 7px; font-size: .875rem; }
+.invitation-banner { margin: 18px 0; padding: 16px; background: #eef3f8; border-radius: 8px; }
+.invitation-banner p { margin: 0; line-height: 1.6; overflow-wrap: anywhere; }
+.invitation-banner .text-button { padding-left: 0; }

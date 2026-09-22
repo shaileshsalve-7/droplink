@@ -6,6 +6,7 @@ import { once } from 'node:events';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { createRoom, joinRoom, inspectRoom, leaveRoom } from '../frontend/src/api/rooms.js';
+import { readInvitation } from '../frontend/src/api/invitations.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const backendPort = Number(process.env.SMOKE_BACKEND_PORT || 18080);
@@ -60,7 +61,10 @@ try {
   // The real frontend API functions now use the running Vite proxy.
   globalThis.fetch = (path, options) => nativeFetch(new URL(path, base), options);
   const host = await createRoom();
-  const guest = await joinRoom(host.room.code.toLowerCase());
+  // Day 3 reuses admission: a parsed invitation contains only the room code.
+  const invitation = readInvitation(`#join=${host.room.code.toLowerCase()}`);
+  assert.equal(invitation.kind, 'valid');
+  const guest = await joinRoom(invitation.code);
   assert.equal(guest.room.id, host.room.id);
   assert.notEqual(host.memberToken, guest.memberToken);
   assert.equal((await inspectRoom(host)).memberCount, 2);
@@ -70,7 +74,7 @@ try {
   await leaveRoom(guest);
   await assert.rejects(inspectRoom(guest), error => error.code === 'ROOM_UNAVAILABLE');
   assert.equal((await inspectRoom(host)).memberCount, 1);
-  console.log('PASS: real frontend client -> Vite -> Spring create/join/status/leave; distinct member tokens.');
+  console.log('PASS: invitation fragment -> real frontend client -> Vite -> Spring join/status/leave; distinct member tokens.');
 
   await delay(4200);
   await assert.rejects(inspectRoom(host), error => error.code === 'ROOM_UNAVAILABLE');

@@ -2,9 +2,10 @@
 
 Temporary file sharing between phone and laptop, without cluttering a chat.
 
-**Status: Day 2 of 8 — temporary rooms.** Create a room, join with its code,
-check membership, and leave. Rooms expire after 30 minutes by default. QR links
-and file transfer are still planned. Deployment is planned for September 28, 2026.
+**Status: Day 3 of 8 — QR invitations and join links.** Create a temporary room,
+then connect another device by code, QR, or a copied link. Joining still requires
+pressing **Join room**. Rooms expire after 30 minutes by default. File transfer
+is still planned. Deployment is planned for September 28, 2026.
 
 ## Problem
 
@@ -27,7 +28,7 @@ the room and deletes its temporary files. No account is planned for the MVP.
 | Room creation, joining, expiry, and leaving | Implemented |
 | Member access tokens, room/member caps, and admission throttling | Implemented |
 | Tab session recovery and manual room status refresh | Implemented |
-| QR codes and join links | Planned: September 23 |
+| Locally generated QR invitations and join links | Implemented |
 | PDFs, documents, images, ZIPs, and code files | Planned: September 24 |
 | Bidirectional sharing and live updates | Planned: September 25 |
 | UX polish | Planned: September 26 |
@@ -36,7 +37,7 @@ the room and deletes its temporary files. No account is planned for the MVP.
 
 ## Tech stack
 
-- Frontend: React 19.3.0, Vite 8.3.0, JavaScript, CSS.
+- Frontend: React 19.3.0, Vite 8.3.0, JavaScript, CSS, qrcode.react 4.2.0.
 - Backend: Spring Boot 4.1.1, Java 17 language target, Maven Wrapper 3.9.16.
 - Real-time: Spring WebSocket dependency installed; endpoint comes on Day 5.
 - Storage: in-memory room metadata implemented; server-local temporary file storage planned.
@@ -141,6 +142,12 @@ debugging, and Git commands. [Day 2 verification](docs/verification-day-02.md) r
 what passed and what still needs manual browser/device checks. After packaging,
 run `node scripts/smoke-day2.mjs` from the repository root for the live API smoke test.
 
+Follow [Day 3](docs/day-03.md) for QR/link behavior, phone setup, tests, and debugging.
+[Day 3 verification](docs/verification-day-03.md) distinguishes automated checks
+from pending physical camera/browser checks. For phone invitations, start Vite
+with `npm run dev -- --host 0.0.0.0` and open the laptop's LAN address on the laptop
+itself before creating a room. Localhost URLs deliberately do not produce a QR.
+
 Rooms default to 30 minutes (`ROOM_TTL`, e.g. `PT10S` for a local expiry check),
 100 active rooms, and eight members per room. Joining never extends expiry. Tokens
 are stored in tab session storage; treat codes and tokens as secrets. Status counts
@@ -167,6 +174,13 @@ Day 2 adds these learning topics:
 - A saved browser session must be revalidated after reload or backend restart.
 - Simulated DOM tests, HTTP tests, and real-device checks prove different things.
 
+Day 3 adds these learning topics:
+
+- A QR code encodes a join URL, not a file or a member access token.
+- URL fragments stay out of the initial HTTP request but are not encrypted.
+- Explicit joining prevents page opening from creating duplicate memberships.
+- A valid QR payload and a reachable network address are separate requirements.
+
 This project is being built with AI assistance. These notes describe lesson topics,
 not a claim that I independently wrote or mastered every component. I will add my
 own explanations and real debugging lessons after each day.
@@ -189,7 +203,7 @@ cd droplink
 ```
 
 Daily commands and implementation commit messages are in [Day 1](docs/day-01.md)
-and [Day 2](docs/day-02.md).
+[Day 2](docs/day-02.md), and [Day 3](docs/day-03.md).
 The earlier downloadable Git bundle is an offline checkpoint; use a fresh GitHub
 clone for future work so your local history matches the published repository.
 

@@ -41,7 +41,7 @@ export default function App() {
     <div className="app-shell">
       <header className="topbar">
         <a className="wordmark" href="/" aria-label="DropLink home">Drop<span>Link</span><span className="brand-mark" aria-hidden="true">↗</span></a>
-        <span className="build-label">Development build · Day 2</span>
+        <span className="build-label">Development build · Day 3</span>
       </header>
 
       <main className="workspace">
@@ -57,7 +57,7 @@ export default function App() {
         </aside>
 
         <section className="main-panel" aria-label="Room workspace">
-          <div className="panel-heading"><span className="eyebrow">WORKSPACE</span><span className="step-label">02 / Rooms</span></div>
+          <div className="panel-heading"><span className="eyebrow">WORKSPACE</span><span className="step-label">03 / Connect</span></div>
           <RoomWorkspace />
           <details className="server-diagnostics"><summary>Check server connection</summary>
           <section className={`connection-card ${status}`} aria-labelledby="connection-title" aria-busy={status === 'checking'}>

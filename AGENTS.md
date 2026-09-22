@@ -31,5 +31,8 @@ what I learned, and future work. Clearly distinguish implemented from planned.
 No public deployment before Day 8. Do not claim GitHub publication without a
 successful push to a user-specified repository.
 
-Current checkpoint: Day 2 implemented; consult docs/verification-day-02.md
-for verification and manual-check limits. Day 3 is not authorized yet.
+Current checkpoint: Day 3 implemented; consult docs/verification-day-03.md.
+The user explicitly authorized Day 3 work on September 22 and requested GitHub
+publication after midnight. This authorizes a one-time publication task after
+00:00 Asia/Kolkata on September 23, 2026; it does not authorize further feature work.
+Day 4 remains paused. A prepared or scheduled upload is not a successful upload.
