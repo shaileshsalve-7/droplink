@@ -2,10 +2,10 @@
 
 Temporary file sharing between phone and laptop, without cluttering a chat.
 
-**Status: Day 3 of 8 — QR invitations and join links.** Create a temporary room,
-then connect another device by code, QR, or a copied link. Joining still requires
-pressing **Join room**. Rooms expire after 30 minutes by default. File transfer
-is still planned. Deployment is planned for September 28, 2026.
+**Status: Day 4 of 8 — file uploads and temporary storage.** Create a room,
+connect by code, QR, or link, then upload and download files in either direction.
+Use **Refresh files** on the receiving device; automatic updates arrive on Day 5.
+Rooms expire after 30 minutes by default. Deployment is planned for September 28, 2026.
 
 ## Problem
 
@@ -29,8 +29,9 @@ the room and deletes its temporary files. No account is planned for the MVP.
 | Member access tokens, room/member caps, and admission throttling | Implemented |
 | Tab session recovery and manual room status refresh | Implemented |
 | Locally generated QR invitations and join links | Implemented |
-| PDFs, documents, images, ZIPs, and code files | Planned: September 24 |
-| Bidirectional sharing and live updates | Planned: September 25 |
+| PDFs, documents, images, ZIPs, and code files | Implemented: upload/list/download |
+| Bidirectional sharing with manual file refresh | Implemented |
+| WebSocket live updates | Planned: September 25 |
 | UX polish | Planned: September 26 |
 | Broader tests and cleanup | Planned: September 27 |
 | Deployment, final README, and screenshots | Planned: September 28 |
@@ -40,7 +41,7 @@ the room and deletes its temporary files. No account is planned for the MVP.
 - Frontend: React 19.3.0, Vite 8.3.0, JavaScript, CSS, qrcode.react 4.2.0.
 - Backend: Spring Boot 4.1.1, Java 17 language target, Maven Wrapper 3.9.16.
 - Real-time: Spring WebSocket dependency installed; endpoint comes on Day 5.
-- Storage: in-memory room metadata implemented; server-local temporary file storage planned.
+- Storage: in-memory room metadata implemented; server-local temporary file storage implemented.
 - Tests: Node's test runner, Vitest/Testing Library with jsdom, and JUnit/Spring Boot tests.
 
 JavaScript is intentional: there is no extra TypeScript learning requirement on Day 1.
@@ -52,6 +53,8 @@ Current request path: browser → Vite development proxy → Spring Boot control
 The browser requests `/api/health`. Vite forwards that request to port 8080. Spring
 returns JSON; React uses it to display connection status. This checks reachability. Room requests use `/api/rooms`; their service stores
 bounded, temporary metadata in memory and checks member credentials and expiry.
+File requests use `/api/rooms/{id}/files`; a separate storage service streams
+uploads to disk and returns metadata only after a successful copy and access recheck.
 
 Planned MVP:
 
@@ -152,8 +155,30 @@ Rooms default to 30 minutes (`ROOM_TTL`, e.g. `PT10S` for a local expiry check),
 100 active rooms, and eight members per room. Joining never extends expiry. Tokens
 are stored in tab session storage; treat codes and tokens as secrets. Status counts
 joined sessions, not online devices. Use one backend instance; restart clears rooms.
-Anyone with a code can join. The server can read future uploads; this is not
+Anyone with a code can join. The server can read uploads; this is not
 end-to-end encryption. Do not deploy this development checkpoint publicly yet.
+
+Day 4 supports any non-empty file type, up to **10 MiB per file**, **20 files / 50 MiB
+per room**, and **250 MiB of stored files per server**. Files are downloads, never
+inline previews. Uploads and downloads use member tokens in headers. Expiry blocks
+new access immediately; disk cleanup runs every 30 seconds and retries failures.
+An already-started download can finish after expiry. This is temporary sharing,
+not a backup service.
+
+The default storage folder is `droplink-files` inside Java's temporary directory.
+`DROPLINK_STORAGE_DIR` can select a dedicated app-only folder. Never point it at a
+folder containing your personal files. One process holds a lock; startup removes
+old generated blobs because the old rooms no longer exist. Normal shutdown also
+removes blobs. A hard crash leaves them until the next startup cleanup.
+Multipart request spooling has separate bounded overhead (four uploads, 11 MiB
+request limit); the 250 MiB quota applies to stored blobs. OS/container temporary
+spools after a hard crash may require system cleanup.
+
+Follow [Day 4](docs/day-04.md) for the code explanation, API, run/test/debug steps,
+Git commands, and GitHub summary. [Day 4 verification](docs/verification-day-04.md)
+records the checks and remaining physical-device work. After packaging, run
+`node scripts/smoke-day4.mjs` from the repository root for live two-session transfer,
+expiry, disk cleanup, and crash/restart checks.
 
 ## What I learned
 
@@ -181,6 +206,15 @@ Day 3 adds these learning topics:
 - Explicit joining prevents page opening from creating duplicate memberships.
 - A valid QR payload and a reachable network address are separate requirements.
 
+Day 4 adds these learning topics:
+
+- Multipart requests carry file bytes; JSON carries file metadata.
+- A random storage ID prevents a filename from becoming a server path.
+- Streaming copies bound memory use; atomic quota checks prevent concurrent overflow.
+- Authorization before parsing saves resources; rechecking after copying handles expiry.
+- HTTP access expiry and physical disk deletion are separate events.
+- File uploads cannot be blindly retried after a network interruption.
+
 This project is being built with AI assistance. These notes describe lesson topics,
 not a claim that I independently wrote or mastered every component. I will add my
 own explanations and real debugging lessons after each day.
@@ -203,7 +237,7 @@ cd droplink
 ```
 
 Daily commands and implementation commit messages are in [Day 1](docs/day-01.md)
-[Day 2](docs/day-02.md), and [Day 3](docs/day-03.md).
+[Day 2](docs/day-02.md), [Day 3](docs/day-03.md), and [Day 4](docs/day-04.md).
 The earlier downloadable Git bundle is an offline checkpoint; use a fresh GitHub
 clone for future work so your local history matches the published repository.
 
@@ -213,3 +247,5 @@ clone for future work so your local history matches the published repository.
 - [Vite setup guide](https://vite.dev/guide/)
 - [React learning guide](https://react.dev/learn)
 - [Spring Initializr](https://start.spring.io/) — official Maven Wrapper scaffold.
+
+- [Spring file upload guide](https://spring.io/guides/gs/uploading-files/)

@@ -31,8 +31,11 @@ what I learned, and future work. Clearly distinguish implemented from planned.
 No public deployment before Day 8. Do not claim GitHub publication without a
 successful push to a user-specified repository.
 
-Current checkpoint: Day 3 implemented; consult docs/verification-day-03.md.
-The user explicitly authorized Day 3 work on September 22 and requested GitHub
-publication after midnight. This authorizes a one-time publication task after
-00:00 Asia/Kolkata on September 23, 2026; it does not authorize further feature work.
-Day 4 remains paused. A prepared or scheduled upload is not a successful upload.
+Current checkpoint: Day 4 implemented; consult docs/verification-day-04.md.
+The user explicitly authorized Day 4 work and requested publication on September 23
+only after Day 3 is uploaded. Day 3 was published and verified as commit
+121974da3014b390346a6475aa3df847f9f99015. This authorizes a one-time Day 4 publication
+task for September 23 morning in Asia/Kolkata, with a fresh Day 3 dependency check.
+This is an exception to the no-background-work rule only for this upload.
+Do not publish Day 4 early or implement Day 5 without user instruction.
+A prepared or scheduled upload is not a successful upload.

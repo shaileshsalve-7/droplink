@@ -41,7 +41,7 @@ export default function App() {
     <div className="app-shell">
       <header className="topbar">
         <a className="wordmark" href="/" aria-label="DropLink home">Drop<span>Link</span><span className="brand-mark" aria-hidden="true">↗</span></a>
-        <span className="build-label">Development build · Day 3</span>
+        <span className="build-label">Development build · Day 4</span>
       </header>
 
       <main className="workspace">
@@ -52,12 +52,12 @@ export default function App() {
           <div className="intro-bottom">
             <span className="small-label">BUILT FOR EVERYDAY FILES</span>
             <p>PDFs, documents, images,<br />ZIPs and code files.</p>
-            <span className="development-note">File sharing is coming in a later build.</span>
+            <span className="development-note">Temporary files. No account needed.</span>
           </div>
         </aside>
 
         <section className="main-panel" aria-label="Room workspace">
-          <div className="panel-heading"><span className="eyebrow">WORKSPACE</span><span className="step-label">03 / Connect</span></div>
+          <div className="panel-heading"><span className="eyebrow">WORKSPACE</span><span className="step-label">04 / Share</span></div>
           <RoomWorkspace />
           <details className="server-diagnostics"><summary>Check server connection</summary>
           <section className={`connection-card ${status}`} aria-labelledby="connection-title" aria-busy={status === 'checking'}>

@@ -30,7 +30,7 @@ class RoomController {
         rooms.leave(id, tokenFrom(authorization));
     }
 
-    private String tokenFrom(String header) {
+    static String tokenFrom(String header) {
         if (header == null || !header.matches("(?i:Bearer) [A-Za-z0-9_-]{43}")) throw RoomException.unavailable();
         return header.substring(7);
     }

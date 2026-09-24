@@ -5,6 +5,11 @@ import RoomWorkspace from './RoomWorkspace.jsx';
 import RoomInvite from './RoomInvite.jsx';
 import { saveSession } from './roomSession.js';
 
+// Room/invitation tests isolate the file API; FilePanel has its own network tests.
+vi.mock('./api/files.js', async importOriginal => ({
+  ...await importOriginal(), listFiles: async () => [],
+}));
+
 const room = { id: 'ea013e60-fb65-4717-bb0c-a1a500edb7bd', code: 'ABCD2345', expiresAt: '2026-09-23T12:30:00Z', serverTime: '2026-09-23T12:00:00Z', memberCount: 1, maxMembers: 8 };
 const member = { room, memberToken: 'a'.repeat(43) };
 const reply = (value, status = 200) => new Response(JSON.stringify(value), { status });

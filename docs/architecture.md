@@ -1,9 +1,10 @@
-# Architecture decisions — Day 3
+# Architecture decisions — Day 4
 
 Day 2 implements room creation/joining, member authentication for status/leave,
 expiry, and bounded in-memory room state. Day 3 adds client-generated QR codes
-and fragment-based join links with explicit admission. File storage and WebSockets
-below remain planned constraints. See `day-02.md` for the implemented HTTP contract.
+and fragment-based join links with explicit admission. Day 4 implements authenticated
+uploads, file listing, attachment downloads, quotas, and disk cleanup. WebSockets
+remain planned. See `day-02.md` for the implemented HTTP contract.
 
 ## One repository, two applications
 
@@ -63,22 +64,39 @@ No database for the first MVP. Keep room metadata in memory and uploaded bytes i
 dedicated temporary directory. Run one backend instance. Restart invalidates rooms;
 startup cleanup must remove orphaned DropLink files without touching unrelated paths.
 
-Proposed initial bounds: 25 MiB per file, 100 MiB per room, 20 files per room,
-and 1 GiB total disk quota. The 100-active-room cap is already implemented.
-Enforce file count/byte reservations against
-concurrent uploads, not just separate preflight checks. Reject overload cleanly.
-The file and disk bounds are design defaults, not implemented limits or tested capacity claims.
+Implemented bounds: 10 MiB per file, 50 MiB per room, 20 files per room,
+and 250 MiB total stored blobs. These replace the earlier proposed larger defaults
+to keep this MVP small. The room cap remains 100. Multipart parsing allows a 10 MiB
+file and 11 MiB request. Four upload requests can parse concurrently; the storage
+service serializes disk copies and quota checks with its own lock. It never puts
+file I/O inside RoomService's lock. This deliberately favors readability and bounded
+resource use over maximum throughput. POSTs also share existing admission throttling.
 
-Expiry is checked on each access, not only by the cleanup job. Expired rooms stop
-accepting new requests immediately. Cleanup should run at most every minute and
-retry failed deletions; bytes may briefly remain on disk after access expires.
-Define and test how in-flight downloads/uploads are cancelled when expiry occurs.
+The file filter validates membership before multipart parsing. The service checks
+again before copying and after copying, so expiry/leave during upload discards the
+partial result. List/download check current membership, and room/file association
+is required for downloads. A file ID alone grants no access.
 
-Use server-generated file IDs as disk names. Preserve the original name only as
-sanitized display/download metadata. Never use a user-provided path. Stream files
-instead of reading entire uploads into Java memory. Discard partial uploads on
-failure. Downloads use attachment disposition and `nosniff`; do not execute or render
-uploaded HTML, code, or archive contents on the server.
+Expired rooms stop accepting requests immediately. File cleanup runs every 30 seconds;
+failed deletions stay eligible for retry and still count toward disk quota. Last-member
+leave also makes stored files eligible. Started downloads may finish after expiry;
+open streams are closed by Spring. On systems that cannot delete an open file,
+cleanup retries after it closes.
+
+A dedicated directory contains UUID-named `.blob` files and a process lock.
+The original filename is only sanitized display/download metadata. Completed metadata
+is in memory. Uploads stream through a 16 KiB buffer. Downloads stream from disk as
+`application/octet-stream`, with attachment disposition and `nosniff`. No previews,
+execution, ZIP extraction, type conversion, or extension allowlist is needed.
+Duplicate names get distinct IDs. Browser downloads use a blob URL and release it;
+the browser holds at most the selected file (up to 10 MiB) in memory per UI request.
+
+Startup and normal shutdown delete only generated blob filenames, without recursive
+folder removal. The process lock prevents another instance using the same directory.
+After a crash, old app-owned blobs are removed on restart. This does not claim secure
+erasure or instant cleanup during process downtime. Multipart container spool files
+are separate from the stored-blob quota; abrupt termination may leave OS temp files.
+Use one backend and one app-owned directory, with sufficient disk headroom.
 
 ## Real-time events
 

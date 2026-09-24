@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-@RestControllerAdvice(assignableTypes = RoomController.class)
+@RestControllerAdvice(assignableTypes = {RoomController.class, FileController.class})
 class RoomErrors {
     @ExceptionHandler(RoomException.class)
     ResponseEntity<ApiError> roomFailure(RoomException error) {
@@ -19,4 +19,5 @@ class RoomErrors {
     }
 
     record ApiError(String code, String message) {}
+
 }

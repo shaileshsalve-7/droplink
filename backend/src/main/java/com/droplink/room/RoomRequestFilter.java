@@ -1,6 +1,8 @@
 package com.droplink.room;
 
 import java.io.IOException;
+import java.util.UUID;
+import java.util.concurrent.Semaphore;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,12 +13,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 class RoomRequestFilter extends OncePerRequestFilter {
     private final AdmissionLimiter limiter;
-    RoomRequestFilter(AdmissionLimiter limiter) { this.limiter = limiter; }
+    private final RoomService rooms;
+    private final Semaphore uploads = new Semaphore(4);
+    RoomRequestFilter(AdmissionLimiter limiter, RoomService rooms) { this.limiter = limiter; this.rooms = rooms; }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        String path = request.getRequestURI();
+        // Servlet path is decoded by the container, matching MVC route handling.
+        String path = request.getServletPath();
         if (path.equals("/api/rooms") || path.startsWith("/api/rooms/")) {
             response.setHeader("Cache-Control", "no-store");
             response.setHeader("X-Content-Type-Options", "nosniff");
@@ -30,6 +35,28 @@ class RoomRequestFilter extends OncePerRequestFilter {
                     response.getWriter().write("{\"code\":\"RATE_LIMITED\",\"message\":\"Too many attempts. Wait one minute and try again.\"}");
                     return;
                 }
+            }
+        }
+        // Authenticate file requests before Spring parses/spools a multipart body.
+        if (path.matches("/api/rooms/[^/]+/files(?:/[^/]+)?")) {
+            try {
+                rooms.inspect(UUID.fromString(path.split("/")[3]), RoomController.tokenFrom(request.getHeader("Authorization")));
+            } catch (IllegalArgumentException | RoomException failure) {
+                response.setStatus(404);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"code\":\"ROOM_UNAVAILABLE\",\"message\":\"Room unavailable.\"}");
+                return;
+            }
+            if (request.getMethod().equals("POST")) {
+                if (!uploads.tryAcquire()) {
+                    response.setStatus(503);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"code\":\"UPLOAD_BUSY\",\"message\":\"Uploads are busy. Try again shortly.\"}");
+                    return;
+                }
+                try { chain.doFilter(request, response); }
+                finally { uploads.release(); }
+                return;
             }
         }
         chain.doFilter(request, response);

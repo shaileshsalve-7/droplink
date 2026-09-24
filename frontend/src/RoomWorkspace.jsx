@@ -3,6 +3,7 @@ import { createRoom, joinRoom, inspectRoom, leaveRoom, normalizeCode, validCode 
 import { loadSession, saveSession } from './roomSession.js';
 import { readInvitation } from './api/invitations.js';
 import RoomInvite from './RoomInvite.jsx';
+import FilePanel from './FilePanel.jsx';
 
 export default function RoomWorkspace() {
   const [membership, setMembership] = useState(loadSession);
@@ -147,7 +148,7 @@ export default function RoomWorkspace() {
         <button className="secondary-button" disabled={Boolean(pending)} onClick={() => perform('refresh')}>{pending === 'refresh' || pending === 'restore' ? 'Checking…' : 'Refresh status'}</button>
         <button className="text-button" disabled={Boolean(pending)} onClick={() => perform('leave')}>{pending === 'leave' ? 'Leaving…' : 'Leave room'}</button>
       </div>
-      <p className="room-next">Room connected. File sharing is coming in a later build.</p>
+      {verified && <FilePanel key={`${room.id}-${membership.memberToken}`} membership={membership} />}
     </> : <>
       <p className="panel-description">Start a temporary room, or enter a code from another device.</p>
       <div className="create-room-card">

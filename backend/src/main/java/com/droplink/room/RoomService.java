@@ -64,6 +64,12 @@ public class RoomService {
         return view(requireMember(id, token));
     }
 
+    // Internal cleanup check only; never expose a public room directory.
+    synchronized boolean isActive(UUID id) {
+        Room room = rooms.get(id);
+        return room != null && clock.instant().isBefore(room.expiresAt);
+    }
+
     public synchronized void leave(UUID id, String token) {
         Room room = requireMember(id, token);
         room.tokens.remove(token);

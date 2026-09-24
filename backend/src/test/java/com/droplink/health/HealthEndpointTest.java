@@ -13,7 +13,8 @@ import tools.jackson.databind.json.JsonMapper;
 import static org.assertj.core.api.Assertions.assertThat;
 
 // A random port avoids conflicts with a developer's already-running backend.
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "droplink.files.directory=${java.io.tmpdir}/droplink-test-${random.uuid}")
 class HealthEndpointTest {
     @Autowired
     private Environment environment;

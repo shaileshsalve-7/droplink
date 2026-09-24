@@ -9,7 +9,8 @@ import org.springframework.core.env.Environment;
 import tools.jackson.databind.json.JsonMapper;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "droplink.files.directory=${java.io.tmpdir}/droplink-test-${random.uuid}")
 class RoomEndpointTest {
     @Autowired Environment environment;
     private final HttpClient client = HttpClient.newHttpClient();

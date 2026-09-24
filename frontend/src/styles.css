@@ -91,3 +91,21 @@ button:disabled { cursor: wait; opacity: .65; }
 .invitation-banner { margin: 18px 0; padding: 16px; background: #eef3f8; border-radius: 8px; }
 .invitation-banner p { margin: 0; line-height: 1.6; overflow-wrap: anywhere; }
 .invitation-banner .text-button { padding-left: 0; }
+
+/* File names wrap instead of widening the workspace on a phone. */
+.file-panel { border-top: 1px solid var(--line); margin-top: 28px; padding-top: 20px; }
+.file-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.file-heading h3 { margin: 0; font-size: 1.125rem; }
+.file-panel form { margin-top: 20px; }
+.file-panel label { display: block; font-weight: 600; margin-bottom: 10px; }
+.file-panel input[type="file"] { display: block; width: 100%; min-width: 0; padding: 12px; border: 1px solid #9cadba; border-radius: 7px; font-size: .875rem; }
+.file-panel input::file-selector-button { border: 0; border-radius: 4px; padding: 8px; margin-right: 8px; color: var(--ink); background: #eef3f8; cursor: pointer; }
+.file-list { list-style: none; padding: 0; margin: 20px 0 0; }
+.file-list li { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.file-list li > div { min-width: 0; }
+.file-name { display: block; overflow-wrap: anywhere; font-weight: 600; font-size: .9375rem; }
+.file-list .footnote { display: block; margin-top: 4px; }
+.file-list button { flex-shrink: 0; font-size: .8125rem; }
+.file-empty { padding: 22px 16px; border-radius: 8px; background: #f3f5f7; font-size: .875rem; line-height: 1.6; color: var(--muted); }
+.error-message { padding: 14px; border-radius: 7px; background: #fff1f1; color: #922525; font-size: .9375rem; line-height: 1.5; }
+@media (max-width: 420px) { .file-list li { align-items: flex-start; flex-direction: column; gap: 10px; } }
