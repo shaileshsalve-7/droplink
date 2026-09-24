@@ -1,0 +1,28 @@
+# Backend for the Netlify frontend. No persistent disk or paid plan.
+services:
+  - type: web
+    name: droplink
+    runtime: docker
+    plan: free
+    region: singapore
+    repo: https://github.com/shaileshsalve-7/droplink
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeployTrigger: "off"
+    envVars:
+      - key: DROPLINK_PUBLIC_ORIGIN
+        value: https://droplink-shailesh.netlify.app
+      - key: SPRING_PROFILES_ACTIVE
+        value: production
+      - key: SERVER_ADDRESS
+        value: 0.0.0.0
+      - key: PORT
+        value: "10000"
+      - key: ROOM_TTL
+        value: PT30M
+      - key: DROPLINK_STORAGE_DIR
+        value: /app/files
+      - key: JAVA_TOOL_OPTIONS
+        value: "-XX:MaxRAMPercentage=50 -XX:+ExitOnOutOfMemoryError"

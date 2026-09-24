@@ -67,7 +67,7 @@ input:focus-visible, summary:focus-visible { outline: 3px solid #1977e5; outline
 .secondary-button, .text-button { padding: 11px 16px; min-height: 46px; border-radius: 7px; border: 1px solid #9cadba; background: white; color: var(--ink); font-weight: 600; }
 .secondary-button:hover { background: #eef3f8; }
 .text-button { border-color: transparent; background: transparent; text-decoration: underline; }
-button:disabled { cursor: wait; opacity: .65; }
+button:disabled { cursor: not-allowed; opacity: .65; }
 .room-code { font-size: clamp(1.45rem, 4vw, 2.4rem); font-weight: 700; letter-spacing: .08em; font-variant-numeric: tabular-nums; margin: 18px 0; overflow-wrap: anywhere; user-select: all; }
 .room-details { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0 0; }
 .room-details dt { font-size: .8125rem; color: var(--muted); }
@@ -109,3 +109,27 @@ button:disabled { cursor: wait; opacity: .65; }
 .file-empty { padding: 22px 16px; border-radius: 8px; background: #f3f5f7; font-size: .875rem; line-height: 1.6; color: var(--muted); }
 .error-message { padding: 14px; border-radius: 7px; background: #fff1f1; color: #922525; font-size: .9375rem; line-height: 1.5; }
 @media (max-width: 420px) { .file-list li { align-items: flex-start; flex-direction: column; gap: 10px; } }
+
+.live-status { margin: 18px 0 0; font-size: .8125rem; line-height: 1.6; color: var(--muted); }
+.live-status.live { color: #17643f; }
+.live-status::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: currentColor; margin-right: 8px; }
+
+/* A native disclosure keeps invitations keyboard-accessible without making
+   every transfer require scrolling past a full QR card on a phone. */
+.invite-details { margin-top: 22px; border: 1px solid var(--line); border-radius: 10px; }
+.invite-details > summary { padding: 14px 16px; min-height: 48px; cursor: pointer; font-size: .9375rem; font-weight: 600; line-height: 1.5; }
+.invite-details .room-invite { margin: 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; }
+.selected-file { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; margin-top: 12px; padding: 12px; background: #f3f5f7; border-radius: 7px; }
+.selected-file p { min-width: 0; flex: 1 1 140px; margin: 0; }
+.selected-file .small-label { display: block; color: var(--muted); font-size: .6875rem; margin-bottom: 6px; }
+.selected-file .footnote { display: block; margin: 4px 0 0; }
+.selected-file button { flex-shrink: 0; }
+.file-panel input[aria-invalid="true"] { border-color: #922525; }
+.transfer-status:empty { margin: 0; }
+.room-notice, .room-error, .error-message { overflow-wrap: anywhere; }
+@media (max-width: 420px) {
+  .panel-heading { flex-wrap: wrap; gap: 8px; }
+  .file-heading { align-items: flex-start; }
+  .file-list button { width: 100%; }
+  .room-details { gap: 12px; }
+}

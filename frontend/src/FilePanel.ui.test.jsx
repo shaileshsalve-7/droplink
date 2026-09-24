@@ -72,3 +72,106 @@ test('unmount aborts a pending upload', async () => {
   fireEvent.click(screen.getByRole('button', { name: /Upload file/ }));
   view.unmount(); expect(signal.aborted).toBe(true);
 });
+
+test('a notification during upload queues one refresh and keeps files from both devices', async () => {
+  const view = render(<FilePanel membership={member} refreshRevision={0} liveStatus="live" />);
+  await screen.findByText(/No files yet/); select();
+  let finish;
+  fetch.mockImplementationOnce(() => new Promise(done => { finish = done; }));
+  fireEvent.click(screen.getByRole('button', { name: /Upload file/ }));
+  view.rerender(<FilePanel membership={member} refreshRevision={1} liveStatus="live" />);
+  view.rerender(<FilePanel membership={member} refreshRevision={2} liveStatus="live" />);
+  const remote = { ...file, id: 'ea013e60-fb65-4717-bb0c-a1a500edb7b2', name: 'phone.pdf' };
+  fetch.mockImplementationOnce(async () => reply([file, remote]));
+  await act(async () => finish(reply(file, 201)));
+  await screen.findByText('phone.pdf'); expect(screen.getByText('notes.java')).toBeTruthy();
+  expect(fetch).toHaveBeenCalledTimes(3);
+  expect(screen.getByText('Live updates connected')).toBeTruthy();
+});
+test('a notification during a list fetch triggers reconciliation after the stale response', async () => {
+  let finish;
+  fetch.mockImplementationOnce(() => new Promise(done => { finish = done; }));
+  const view = render(<FilePanel membership={member} refreshRevision={0} />);
+  view.rerender(<FilePanel membership={member} refreshRevision={1} />);
+  fetch.mockImplementationOnce(async () => reply([file]));
+  await act(async () => finish(reply([])));
+  await screen.findByText('notes.java'); expect(fetch).toHaveBeenCalledTimes(2);
+});
+
+test('background refresh preserves picker focus and accepts a selection while loading', async () => {
+  const view = render(<FilePanel membership={member} />);
+  await screen.findByText(/No files yet/);
+  const picker = screen.getByLabelText('Choose a file'); picker.focus();
+  let finish;
+  fetch.mockImplementationOnce(() => new Promise(done => { finish = done; }));
+  view.rerender(<FilePanel membership={member} refreshRevision={1} />);
+  expect(picker.disabled).toBe(false);
+  expect(document.activeElement).toBe(picker);
+  select();
+  expect(screen.getByText('3 B')).toBeTruthy();
+  expect(screen.getByRole('button', { name: /Upload file/ }).disabled).toBe(true);
+  await act(async () => finish(reply([])));
+  expect(screen.getByRole('button', { name: /Upload file/ }).disabled).toBe(false);
+  expect(screen.getByText('notes.java')).toBeTruthy();
+});
+
+test('clear selection resets the upload and returns focus to the picker', async () => {
+  await open(); select();
+  fireEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
+  const picker = screen.getByLabelText('Choose a file');
+  expect(document.activeElement).toBe(picker);
+  expect(picker.value).toBe('');
+  expect(screen.queryByText('READY TO SHARE')).toBeNull();
+  expect(screen.getByRole('button', { name: /Upload file/ }).disabled).toBe(true);
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+test('selection validation remains linked to the input after a live refresh', async () => {
+  const view = render(<FilePanel membership={member} />);
+  await screen.findByText(/No files yet/); select('');
+  view.rerender(<FilePanel membership={member} refreshRevision={1} />);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Refresh files' }).disabled).toBe(false));
+  const picker = screen.getByLabelText('Choose a file');
+  expect(picker.getAttribute('aria-invalid')).toBe('true');
+  expect(picker.getAttribute('aria-describedby')).toContain(screen.getByRole('alert').id);
+  select(); expect(picker.getAttribute('aria-invalid')).toBe('false');
+  expect(screen.queryByRole('alert')).toBeNull();
+});
+
+test('background reconciliation retains an uncertain upload warning and selection', async () => {
+  const view = render(<FilePanel membership={member} />);
+  await screen.findByText(/No files yet/); select();
+  fetch.mockRejectedValueOnce(new TypeError('offline'));
+  fireEvent.click(screen.getByRole('button', { name: /Upload file/ }));
+  await screen.findByRole('alert');
+  view.rerender(<FilePanel membership={member} refreshRevision={1} />);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Refresh files' }).disabled).toBe(false));
+  expect(screen.getByRole('alert').textContent).toContain('Refresh files before retrying');
+  expect(screen.getByText('READY TO SHARE')).toBeTruthy();
+  expect(fetch.mock.calls.filter(([, o]) => o.method === 'POST')).toHaveLength(1);
+});
+
+test('initial list failure offers refresh without claiming the room is empty', async () => {
+  let finish;
+  fetch.mockImplementationOnce(() => new Promise(done => { finish = done; }));
+  render(<FilePanel membership={member} />);
+  expect(screen.getByText('Loading room files…')).toBeTruthy();
+  expect(screen.queryByText(/No files yet/)).toBeNull();
+  await act(async () => finish(reply({ code: 'UNAVAILABLE' }, 503)));
+  await screen.findByRole('alert');
+  expect(screen.queryByText(/No files yet/)).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh files' }));
+  await screen.findByText(/No files yet/);
+  expect(screen.queryByRole('alert')).toBeNull();
+});
+
+test('clear selection cannot change the file while its upload is in flight', async () => {
+  await open(); select();
+  let finish;
+  fetch.mockImplementationOnce(() => new Promise(done => { finish = done; }));
+  fireEvent.click(screen.getByRole('button', { name: /Upload file/ }));
+  expect(screen.getByRole('button', { name: 'Clear selection' }).disabled).toBe(true);
+  expect(screen.getByLabelText('Choose a file').disabled).toBe(true);
+  await act(async () => finish(reply(file, 201)));
+  expect(screen.queryByRole('button', { name: 'Clear selection' })).toBeNull();
+});

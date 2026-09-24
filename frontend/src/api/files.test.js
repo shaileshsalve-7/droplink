@@ -39,3 +39,16 @@ test('download preserves bytes and rejects incomplete bodies', async t => {
   fetch.mock.mockImplementation(async () => new Response('a'));
   await assert.rejects(downloadFile(member, file), /Download interrupted/);
 });
+test('a truncated successful upload response keeps the warning and never repeats the POST', async t => {
+  const fetch = t.mock.method(globalThis, 'fetch', async () => new Response('{"id":', { status: 201 }));
+  await assert.rejects(uploadFile(member, new File(['abc'], 'notes.java')),
+    error => error.code === 'INVALID_RESPONSE' && /Refresh files before retrying/.test(error.message));
+  assert.equal(fetch.mock.callCount(), 1);
+});
+test('null or unknown file errors fall back to a safe API error', async t => {
+  const fetch = t.mock.method(globalThis, 'fetch');
+  for (const data of [null, { code: '__proto__' }, { code: 'toString' }, { code: {}, message: 'private details' }]) {
+    fetch.mock.mockImplementation(async () => reply(data, 503));
+    await assert.rejects(listFiles(member), error => error.code === 'REQUEST_FAILED' && error.message === 'File request failed. Try again.');
+  }
+});

@@ -2,6 +2,8 @@
 frontend/node_modules/
 frontend/dist/
 backend/target/
+# JVM attach probes can be left behind by test tooling.
+backend/.attach_pid*
 
 # Local settings, secrets, and temporary user files
 .env
@@ -19,3 +21,4 @@ playwright-report/
 
 .vitest/
 coverage/
+.netlify/

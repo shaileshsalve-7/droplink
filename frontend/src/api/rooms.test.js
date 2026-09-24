@@ -16,6 +16,14 @@ test('does not reflect arbitrary error messages from the server', async (t) => {
   t.mock.method(globalThis, 'fetch', async () => new Response('{"message":"secret stack trace"}', { status: 500 }));
   await assert.rejects(createRoom(), error => !error.message.includes('secret'));
 });
+test('null or unknown room errors remain actionable and never expose raw server messages', async t => {
+  const mock = t.mock.method(globalThis, 'fetch');
+  for (const data of [null, { code: '__proto__' }, { code: 'toString' }, { code: {}, message: 'private details' }]) {
+    mock.mock.mockImplementation(async () => new Response(JSON.stringify(data), { status: 500 }));
+    await assert.rejects(createRoom(), error => error instanceof RoomApiError && error.code === 'REQUEST_FAILED'
+      && error.message === 'The request failed. Please try again.');
+  }
+});
 test('access token goes in the header, never in the URL', async (t) => {
   const room = { id: 'ea013e60-fb65-4717-bb0c-a1a500edb7bd', code: 'ABCD2345', expiresAt: '2026-09-22T12:30:00Z', serverTime: '2026-09-22T12:00:00Z', memberCount: 1, maxMembers: 8 };
   const memberToken = 'x'.repeat(43);

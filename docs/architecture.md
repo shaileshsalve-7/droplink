@@ -1,10 +1,10 @@
-# Architecture decisions — Day 4
+# Architecture decisions — Day 7
 
 Day 2 implements room creation/joining, member authentication for status/leave,
 expiry, and bounded in-memory room state. Day 3 adds client-generated QR codes
 and fragment-based join links with explicit admission. Day 4 implements authenticated
-uploads, file listing, attachment downloads, quotas, and disk cleanup. WebSockets
-remain planned. See `day-02.md` for the implemented HTTP contract.
+uploads, file listing, attachment downloads, quotas, and disk cleanup. Day 5 adds authenticated WebSocket notifications and reconnect recovery. Days 6–7
+improve feedback, validation, and multipart request boundaries. See `day-02.md` for the implemented HTTP contract.
 
 ## One repository, two applications
 
@@ -72,7 +72,10 @@ service serializes disk copies and quota checks with its own lock. It never puts
 file I/O inside RoomService's lock. This deliberately favors readability and bounded
 resource use over maximum throughput. POSTs also share existing admission throttling.
 
-The file filter validates membership before multipart parsing. The service checks
+The file filter rejects multipart bodies on every route/method except POST to
+`/api/rooms/{roomId}/files`, then validates membership before multipart parsing.
+This includes unknown paths and trailing-slash variants, so they cannot bypass
+the upload parsing budget. The service checks
 again before copying and after copying, so expiry/leave during upload discards the
 partial result. List/download check current membership, and room/file association
 is required for downloads. A file ID alone grants no access.
@@ -98,13 +101,38 @@ erasure or instant cleanup during process downtime. Multipart container spool fi
 are separate from the stored-blob quota; abrupt termination may leave OS temp files.
 Use one backend and one app-owned directory, with sufficient disk headroom.
 
-## Real-time events
+## Real-time events (implemented Day 5)
 
-WebSockets notify members of file availability, joins, and expiry. They do not carry
-file bytes. Authenticate membership before accepting or subscribing a socket, check
-allowed origins, scope events to the room, and close sockets when access expires.
-After reconnecting, fetch the authoritative file list over HTTP to recover missed
-events. Browser backgrounding and Wi-Fi changes can break sockets.
+`/api/live` upgrades to a WebSocket with Spring's same-origin default. Vite proxies
+this path with WebSocket support and preserves Host/Origin. An HTTP(S) page chooses
+WS(S) accordingly. No tokens or codes are embedded in the socket URL.
+
+The browser sends one JSON authentication frame with room ID and member token.
+Until validated, no room data is sent. Authentication has a five-second deadline.
+A session may use two sockets for brief reconnect overlap; the server caps all
+sockets at 128 and incoming frames at 1 KiB. Handshakes share admission throttling.
+
+After a successful upload, the controller publishes a room-only invalidation event,
+after the storage lock is released. The socket handler marks only that room's
+clients dirty; repeated notifications collapse into one flag. A 500 ms scheduler
+queues at most one job per socket. Four send workers and a bounded queue isolate
+network writes from HTTP uploads and room/file cleanup. A concurrent-session wrapper
+serializes sends and bounds its buffer; this is not a load-tested latency guarantee.
+
+Before private updates, the server rechecks membership and expiry. It sends `ready`
+on authentication, `files_changed` after an upload, `room_changed` when the joined
+session count differs, and `ping` every 15 seconds. Missing `pong` for 45 seconds
+closes the connection. Revoked/expired membership closes with application code 4404.
+Socket disconnection does not delete room membership or its files.
+
+The frontend fetches the HTTP file list after `ready` and every invalidation. A
+notification during another request queues one deferred refresh, including during
+an upload/download or an older list response. HTTP data is authoritative. Reconnects
+use exponential delay with jitter capped at about 30 seconds. A ready/auth deadline
+and heartbeat watchdog detect stalled connections. Returning to the page or coming
+online reconnects and reconciles missed changes. Terminal access failures clear the
+saved membership. Manual refresh remains available when sockets are unavailable.
+No WebSocket upload, automatic retry of a file POST, or online-device count is claimed.
 
 ## Development and deployment
 

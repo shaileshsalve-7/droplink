@@ -4,6 +4,7 @@ import { loadSession, saveSession } from './roomSession.js';
 import { readInvitation } from './api/invitations.js';
 import RoomInvite from './RoomInvite.jsx';
 import FilePanel from './FilePanel.jsx';
+import { useRoomLive } from './useRoomLive.js';
 
 export default function RoomWorkspace() {
   const [membership, setMembership] = useState(loadSession);
@@ -24,6 +25,19 @@ export default function RoomWorkspace() {
     setMembership(value);
     if (!saveSession(value)) setNotice('Tab storage is unavailable. Reloading will require joining again.');
   }
+
+  const live = useRoomLive(membership, verified, {
+    onRoom: room => {
+      // Ignore updates while leaving or refreshing so an old event cannot
+      // restore a membership that an explicit request is changing.
+      if (!active.current) remember({ ...membership, room });
+    },
+    onUnavailable: () => {
+      active.current?.abort(); active.current = null; setPending('');
+      remember(null); setVerified(false);
+      setNotice('This room has expired or is no longer available. Create or join another room.');
+    },
+  });
 
   async function perform(action, saved = membership) {
     // A ref closes the double-click gap before React updates the disabled state.
@@ -138,17 +152,20 @@ export default function RoomWorkspace() {
         <button className="secondary-button" onClick={copyCode}>{copied ? 'Copied' : 'Copy code'}</button>
         <p className="footnote">Anyone with this code can join. Share it privately.</p>
       </div>
-      {verified && <RoomInvite key={room.id} code={room.code} />}
       <dl className="room-details">
         <div><dt>Joined sessions</dt><dd>{verified ? `${room.memberCount} / ${room.maxMembers}` : 'Not verified'}</dd></div>
         <div><dt>Time remaining</dt><dd>{remaining === null ? 'Checking…' : `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`}</dd></div>
       </dl>
-      <p className="footnote">Session count is from your last status check; it is not a live online count.</p>
+      <p className="footnote">Joined sessions update while connected. They are not a count of online devices.</p>
       <div className="room-actions">
         <button className="secondary-button" disabled={Boolean(pending)} onClick={() => perform('refresh')}>{pending === 'refresh' || pending === 'restore' ? 'Checking…' : 'Refresh status'}</button>
         <button className="text-button" disabled={Boolean(pending)} onClick={() => perform('leave')}>{pending === 'leave' ? 'Leaving…' : 'Leave room'}</button>
       </div>
-      {verified && <FilePanel key={`${room.id}-${membership.memberToken}`} membership={membership} />}
+      {verified && <details key={room.id} className="invite-details">
+        <summary>Invite another device · QR & link</summary>
+        <RoomInvite code={room.code} />
+      </details>}
+      {verified && <FilePanel key={`${room.id}-${membership.memberToken}`} membership={membership} refreshRevision={live.fileRevision} liveStatus={live.status} />}
     </> : <>
       <p className="panel-description">Start a temporary room, or enter a code from another device.</p>
       <div className="create-room-card">

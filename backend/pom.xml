@@ -16,7 +16,7 @@
 	<properties>
 		<java.version>17</java.version>
 	</properties>
-	<!-- Starters provide HTTP, validation, and future WebSocket support. -->
+	<!-- Starters provide HTTP, validation, and WebSocket support. -->
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -37,6 +37,19 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
+	<!-- Opt in only after building frontend/dist. Development still uses Vite. -->
+	<profiles>
+		<profile>
+			<id>production</id>
+			<build>
+				<resources>
+					<resource><directory>src/main/resources</directory></resource>
+					<resource><directory>../frontend/dist</directory><targetPath>static</targetPath></resource>
+				</resources>
+			</build>
+		</profile>
+	</profiles>
 
 	<build>
 		<plugins>

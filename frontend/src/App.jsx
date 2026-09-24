@@ -34,14 +34,14 @@ export default function App() {
     idle: ['Check your connection', 'Make sure the sharing server is reachable before getting started.'],
     checking: ['Connecting…', 'Waiting for the sharing server to respond.'],
     connected: ['Server is reachable', `Last checked at ${checkedAt}. Room creation and joining are available.`],
-    error: ['Couldn’t reach the server', 'Start the Spring Boot backend, then try again. If it is running, check its address and port.'],
+    error: ['Couldn’t reach the server', 'Check your connection and try again in a minute. The sharing server may be starting up.'],
   };
 
   return (
     <div className="app-shell">
       <header className="topbar">
         <a className="wordmark" href="/" aria-label="DropLink home">Drop<span>Link</span><span className="brand-mark" aria-hidden="true">↗</span></a>
-        <span className="build-label">Development build · Day 4</span>
+        <span className="build-label">Temporary sharing</span>
       </header>
 
       <main className="workspace">
@@ -57,7 +57,7 @@ export default function App() {
         </aside>
 
         <section className="main-panel" aria-label="Room workspace">
-          <div className="panel-heading"><span className="eyebrow">WORKSPACE</span><span className="step-label">04 / Share</span></div>
+          <div className="panel-heading"><span className="eyebrow">WORKSPACE</span><span className="step-label">Connect & share</span></div>
           <RoomWorkspace />
           <details className="server-diagnostics"><summary>Check server connection</summary>
           <section className={`connection-card ${status}`} aria-labelledby="connection-title" aria-busy={status === 'checking'}>

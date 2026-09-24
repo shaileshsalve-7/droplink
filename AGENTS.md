@@ -1,41 +1,30 @@
 # DropLink working agreement
 
-User-requested stack: React + Vite, Java + Spring Boot, WebSockets, temporary storage.
-Keep the implementation beginner-readable, commented where reasoning helps, original,
-responsive, minimal, and focused on a working MVP.
+## Current user instruction (September 24, 2026)
 
-## Daily teaching workflow
+Finish all remaining work now and provide a live Netlify link. This explicitly
+replaces the earlier daily upload/deployment timing. The recurring daily task has
+been disabled to prevent it from overwriting this release. Publish the tested
+remaining source as a coherent release, then verify hosting. Preserve original
+checkpoint branches and remote work; never force-push or backdate commits.
 
-1. Explain what each part does and why it is needed BEFORE writing that part.
-2. Implement only the current day's scope. Show progress and explain decisions.
-3. Run meaningful tests, provide commands, and explain how to debug failures.
-4. Give git commands, one clean commit message, and a short GitHub summary.
-5. Stop after that day. Wait for the user to say `next day` before continuing.
+## Product and teaching requirements
 
-Do not schedule background work or advance based on the calendar alone.
-The dates label milestones; user confirmation controls progression.
+Keep React + Vite, Java + Spring Boot, WebSockets, temporary storage, a simple
+original responsive design, and a working MVP. Explain what/why before changes.
+Use meaningful tests, report actual results, and include run/test/debug commands,
+a clean commit message, and a short GitHub summary. README covers problem,
+solution, features, stack, architecture, setup, learning with AI assistance,
+limitations and future work. Do not claim unperformed checks or public deployment.
 
-## Scope by day (September 2026)
+## Hosting
 
-- 21: setup and architecture
-- 22: temporary rooms, create and join
-- 23: QR codes and join links
-- 24: uploads and temporary storage
-- 25: cross-device real-time sharing
-- 26: UX polish
-- 27: testing and cleanup
-- 28: deployment, final README, and screenshots
+The user requested Netlify. Host the React frontend there; Spring Boot requires
+a separate Java/Docker service. Keep the backend on a free Render plan if available,
+one instance, no persistent disk. Configure the exact frontend HTTPS origin for
+CORS and WebSocket access and the exact backend origin for Vite's public API URL.
+Do not incur charges or modify unrelated hosting services. Do not publish secrets,
+user uploads, dependencies, build output, logs, or local authentication settings.
 
-The README must cover problem, solution, features, stack, architecture, setup,
-what I learned, and future work. Clearly distinguish implemented from planned.
-No public deployment before Day 8. Do not claim GitHub publication without a
-successful push to a user-specified repository.
-
-Current checkpoint: Day 4 implemented; consult docs/verification-day-04.md.
-The user explicitly authorized Day 4 work and requested publication on September 23
-only after Day 3 is uploaded. Day 3 was published and verified as commit
-121974da3014b390346a6475aa3df847f9f99015. This authorizes a one-time Day 4 publication
-task for September 23 morning in Asia/Kolkata, with a fresh Day 3 dependency check.
-This is an exception to the no-background-work rule only for this upload.
-Do not publish Day 4 early or implement Day 5 without user instruction.
-A prepared or scheduled upload is not a successful upload.
+Earlier dated checkpoint instructions are historical. See docs/deployment.md and
+docs/verification-release.md for the current release configuration and evidence.

@@ -2,98 +2,88 @@
 
 Temporary file sharing between phone and laptop, without cluttering a chat.
 
-**Status: Day 4 of 8 — file uploads and temporary storage.** Create a room,
-connect by code, QR, or link, then upload and download files in either direction.
-Use **Refresh files** on the receiving device; automatic updates arrive on Day 5.
-Rooms expire after 30 minutes by default. Deployment is planned for September 28, 2026.
+**Status:** The sharing MVP and Netlify integration are implemented. Release is
+in progress at the user's request; the earlier September 28 schedule is superseded.
+See [release verification](docs/verification-release.md) for tested and pending gates.
 
-## Problem
+## Problem and solution
 
-Using WhatsApp to move files between your own devices mixes transfers with messages,
-makes old files hard to find, and leaves a history you may not need.
-
-## Solution
-
-The intended MVP creates a temporary room. Another device joins by code or QR link.
-Either device can upload a file and the other can download it. The server expires
-the room and deletes its temporary files. No account is planned for the MVP.
+Sending files to yourself through WhatsApp mixes transfers with conversations and
+leaves a history you may not need. DropLink creates a temporary room instead:
+open it on one device, join from another using a code, QR, or link, and transfer
+files in either direction. No account is required.
 
 ## Features
 
-| Feature | Current status |
+- Eight-character room codes, QR invitations, and copyable join links.
+- Thirty-minute maximum room lifetime, with separate member access tokens.
+- Upload/download of PDFs, documents, images, ZIPs, and code files.
+- Automatic file-list updates, reconnect recovery, and manual refresh fallback.
+- File selection feedback, clear error states, and compact invitation controls.
+- Bounded storage and request handling, room isolation, and temporary-file cleanup.
+- Session recovery within a browser tab; leave revokes that session's access.
+
+| Limit | Default |
 | --- | --- |
-| Responsive React workspace | Implemented |
-| Spring Boot health API and connection check | Implemented |
-| Loading, failure, retry, and timeout states | Implemented |
-| Room creation, joining, expiry, and leaving | Implemented |
-| Member access tokens, room/member caps, and admission throttling | Implemented |
-| Tab session recovery and manual room status refresh | Implemented |
-| Locally generated QR invitations and join links | Implemented |
-| PDFs, documents, images, ZIPs, and code files | Implemented: upload/list/download |
-| Bidirectional sharing with manual file refresh | Implemented |
-| WebSocket live updates | Planned: September 25 |
-| UX polish | Planned: September 26 |
-| Broader tests and cleanup | Planned: September 27 |
-| Deployment, final README, and screenshots | Planned: September 28 |
+| File size | 10 MiB, non-empty files |
+| Files / storage per room | 20 files / 50 MiB |
+| Stored files per server | 250 MiB |
+| Active rooms / members per room | 100 / 8 |
+| Concurrent upload parsing | 4 requests, up to 11 MiB each |
 
 ## Tech stack
 
-- Frontend: React 19.3.0, Vite 8.3.0, JavaScript, CSS, qrcode.react 4.2.0.
-- Backend: Spring Boot 4.1.1, Java 17 language target, Maven Wrapper 3.9.16.
-- Real-time: Spring WebSocket dependency installed; endpoint comes on Day 5.
-- Storage: in-memory room metadata implemented; server-local temporary file storage implemented.
-- Tests: Node's test runner, Vitest/Testing Library with jsdom, and JUnit/Spring Boot tests.
-
-JavaScript is intentional: there is no extra TypeScript learning requirement on Day 1.
-No database, Docker, accounts, or cloud services are needed to run this checkpoint.
+| Layer | Technology |
+| --- | --- |
+| Interface | React 19.3, Vite 8.3, JavaScript, CSS, qrcode.react |
+| Server | Spring Boot 4.1.1, Java 17 target, Maven Wrapper |
+| Transport | HTTP multipart uploads/downloads; native WebSocket notifications |
+| Storage | In-memory room metadata and dedicated server-local temporary files |
+| Tests | Node test runner, Vitest/Testing Library/jsdom, JUnit/Spring HTTP tests |
+| Hosting configuration | Netlify frontend; Java Docker backend on free Render compute |
 
 ## Architecture
 
-Current request path: browser → Vite development proxy → Spring Boot controllers → room service.
-The browser requests `/api/health`. Vite forwards that request to port 8080. Spring
-returns JSON; React uses it to display connection status. This checks reachability. Room requests use `/api/rooms`; their service stores
-bounded, temporary metadata in memory and checks member credentials and expiry.
-File requests use `/api/rooms/{id}/files`; a separate storage service streams
-uploads to disk and returns metadata only after a successful copy and access recheck.
-
-Planned MVP:
-
 ```mermaid
 flowchart TD
-    A[Phone browser] <-->|HTTP files and WebSocket events| C[Spring Boot]
-    B[Laptop browser] <-->|HTTP files and WebSocket events| C
-    C --> D[Room metadata in memory]
-    C --> E[Temporary file directory]
+    A[Phone browser] <-->|HTTPS files and WSS events| C[Java backend]
+    B[Laptop browser] <-->|HTTPS files and WSS events| C
+    A --> D[React on Netlify]
+    B --> D
+    C --> E[Room metadata in memory]
+    C --> F[Temporary file directory]
 ```
 
-HTTP carries files. WebSockets carry small notifications, such as “a file is ready.”
-The server mediates transfers; this is not peer-to-peer or end-to-end encrypted.
-See [architecture decisions](docs/architecture.md) for the privacy and expiry design.
+During development Vite proxies `/api` to Spring Boot. On Netlify the built React assets call the separate Java backend over HTTPS/WSS.
+An optional single-JAR deployment still bundles the frontend with Spring Boot. HTTP carries file bytes;
+WebSockets carry small notifications that trigger a fresh file-list request.
+Tokens stay out of invitation URLs and WebSocket handshake URLs. The backend
+allows only the configured frontend origin for cross-origin browser requests.
 
-## Setup
+This is server-mediated sharing, not peer-to-peer or end-to-end encryption.
+Anyone with the room code can join, and the server can read uploaded bytes.
+See [architecture decisions](docs/architecture.md) and [deployment](docs/deployment.md).
 
-Install a JDK (17 or later; 21/25 LTS are also suitable), Node.js 22.12+ or 24+,
-and Git. Java 26 is compatible with this Spring Boot version. Set `JAVA_HOME` to
-your JDK directory if the wrapper cannot find Java. Internet is required on the
-first run to download Maven and dependencies. IntelliJ is optional.
+## Local setup
 
-Check your environment:
+Install Git, a JDK 17 or later, and Node.js 22.12+ or 24+. Set `JAVA_HOME` if the
+Maven wrapper cannot find Java. The first install needs internet access.
 
 ```powershell
+git clone https://github.com/shaileshsalve-7/droplink.git
+cd droplink
 java -version
 node --version
-npm --version
-git --version
 ```
 
-Extract the project, open a terminal inside `droplink`, and start the backend:
+Terminal 1, from the project root:
 
 ```powershell
 cd backend
 .\mvnw.cmd spring-boot:run
 ```
 
-In a **second** terminal, again starting inside `droplink`:
+Terminal 2, from the project root:
 
 ```powershell
 cd frontend
@@ -101,151 +91,130 @@ npm ci
 npm run dev
 ```
 
-Open [localhost:5173](http://localhost:5173), press **Create room**, then join using
-the code from a separate browser or device. Press **Refresh status** to see joined
-sessions. Keep both terminals open. Stop a server with Ctrl+C. The health check
-remains available under **Check server connection**.
+Open http://localhost:5173. Create a room, then join from a separate browser or
+device. Keep both terminals open; Ctrl+C stops each server. On Linux/macOS use
+`./mvnw` instead of `.\mvnw.cmd`.
 
-On macOS/Linux use `./mvnw` wherever these instructions use `.\mvnw.cmd`.
-If necessary run `chmod +x mvnw` once inside `backend` after extracting the ZIP.
+For a phone on the same Wi-Fi, start Vite with `npm run dev -- --host 0.0.0.0` and
+open the laptop's LAN address, such as `http://<laptop-LAN-IP>:5173`, on **both**
+devices. Create the room from that address so its QR is reachable by the phone.
+Localhost links intentionally do not generate a QR. Allow the development server
+only on your trusted private network if the OS firewall asks.
 
-Optional configuration: copy `frontend/.env.example` to `frontend/.env` to change
-the proxy target. Defaults work without an environment file. Restart Vite after
-changing it. The backend understands `PORT` (default 8080) and `SERVER_ADDRESS`
-(default 127.0.0.1). These are process environment variables; Spring Boot does not
-automatically read a `.env` file.
+`frontend/.env.example` documents the optional proxy target. Spring uses process
+environment variables, not an automatically loaded `.env` file. Defaults work
+without custom settings. Local LAN HTTP is for testing; public hosting needs HTTPS.
 
-## Test and build
+## Tests, build, and debugging
 
-Inside `backend`:
-
-```powershell
-.\mvnw.cmd test
-.\mvnw.cmd package
-```
-
-Inside `frontend`:
+From the repository root:
 
 ```powershell
-npm test
-npm run build
+npm --prefix frontend test
+npm --prefix frontend run build
+.\backend\mvnw.cmd -B -f backend/pom.xml clean package
+node scripts/smoke-day4.mjs
+node scripts/smoke-day5.mjs
 ```
 
-Backend packaging creates `backend/target/droplink-0.1.0-SNAPSHOT.jar`. Frontend
-building creates `frontend/dist/`. Neither output should be committed.
-`vite preview` only previews static output: it is not the configured development
-API proxy and is not a production deployment. For local development use `npm run dev`.
+To build and check the one-service production package, build the frontend first:
 
-For manual success/failure checks, phone access, IntelliJ breakpoints, and common
-errors, follow [the Day 1 lesson](docs/day-01.md). See
-[Day 1 verification](docs/verification-day-01.md) for its recorded checks.
+```powershell
+.\backend\mvnw.cmd -B -f backend/pom.xml -Pproduction clean package
+node scripts/smoke-production.mjs
+```
 
-Follow [the Day 2 lesson](docs/day-02.md) for room behavior, API details, tests,
-debugging, and Git commands. [Day 2 verification](docs/verification-day-02.md) records
-what passed and what still needs manual browser/device checks. After packaging,
-run `node scripts/smoke-day2.mjs` from the repository root for the live API smoke test.
+The JAR is `backend/target/droplink-0.1.0-SNAPSHOT.jar`; generated output is not
+committed. The production profile includes the existing `frontend/dist`, so always
+rebuild React after a UI change. `vite preview` is not a production backend.
 
-Follow [Day 3](docs/day-03.md) for QR/link behavior, phone setup, tests, and debugging.
-[Day 3 verification](docs/verification-day-03.md) distinguishes automated checks
-from pending physical camera/browser checks. For phone invitations, start Vite
-with `npm run dev -- --host 0.0.0.0` and open the laptop's LAN address on the laptop
-itself before creating a room. Localhost URLs deliberately do not produce a QR.
+In IntelliJ, debug the application and place breakpoints in `RoomController`,
+`RoomRequestFilter`, `FileController`, or `RoomSocketHandler`. Use the browser
+Network panel to distinguish HTTP errors from WebSocket handshake/auth failures.
+A dependency-download failure happens before application code runs. A failed
+upload response may hide a completed upload: refresh files before retrying.
 
-Rooms default to 30 minutes (`ROOM_TTL`, e.g. `PT10S` for a local expiry check),
-100 active rooms, and eight members per room. Joining never extends expiry. Tokens
-are stored in tab session storage; treat codes and tokens as secrets. Status counts
-joined sessions, not online devices. Use one backend instance; restart clears rooms.
-Anyone with a code can join. The server can read uploads; this is not
-end-to-end encryption. Do not deploy this development checkpoint publicly yet.
+[Day 1](docs/day-01.md) covers setup/debug basics;
+[Day 8](docs/day-08.md) covers production packaging;
+[deployment.md](docs/deployment.md) has Windows/Docker/Render commands and troubleshooting.
 
-Day 4 supports any non-empty file type, up to **10 MiB per file**, **20 files / 50 MiB
-per room**, and **250 MiB of stored files per server**. Files are downloads, never
-inline previews. Uploads and downloads use member tokens in headers. Expiry blocks
-new access immediately; disk cleanup runs every 30 seconds and retries failures.
-An already-started download can finish after expiry. This is temporary sharing,
-not a backup service.
+## Deployment and screenshots
 
-The default storage folder is `droplink-files` inside Java's temporary directory.
-`DROPLINK_STORAGE_DIR` can select a dedicated app-only folder. Never point it at a
-folder containing your personal files. One process holds a lock; startup removes
-old generated blobs because the old rooms no longer exist. Normal shutdown also
-removes blobs. A hard crash leaves them until the next startup cleanup.
-Multipart request spooling has separate bounded overhead (four uploads, 11 MiB
-request limit); the 250 MiB quota applies to stored blobs. OS/container temporary
-spools after a hard crash may require system cleanup.
+Netlify project: `droplink-shailesh`. The Java server needs a separate Docker host;
+Netlify cannot run this long-lived Spring Boot/WebSocket service. `netlify.toml`
+builds `frontend/`; set its `VITE_API_BASE_URL` to the assigned backend HTTPS origin.
+Set the backend's `DROPLINK_PUBLIC_ORIGIN` to the exact frontend origin. CORS
+preflights run before bearer-token checks; actual protected requests still require
+a member token. Unknown browser origins are rejected.
 
-Follow [Day 4](docs/day-04.md) for the code explanation, API, run/test/debug steps,
-Git commands, and GitHub summary. [Day 4 verification](docs/verification-day-04.md)
-records the checks and remaining physical-device work. After packaging, run
-`node scripts/smoke-day4.mjs` from the repository root for live two-session transfer,
-expiry, disk cleanup, and crash/restart checks.
+`Dockerfile` and `render.yaml` provide one free Java service with `/api/health`,
+non-root execution and temporary disk. No persistent disk or multiple instances.
+The single-JAR mode remains available for local production testing.
+
+The final URLs, genuine screenshots and observed deployment status are recorded
+in [release verification](docs/verification-release.md). Do not interpret a created
+hosting project as a working file-sharing app before both services are verified.
+
+## Privacy, reliability, and limitations
+
+- Share invitation codes privately. Browser tab tokens authorize access but do
+  not encrypt stored files. Files are downloads, never inline previews or execution.
+- Rooms and files can disappear before 30 minutes if the server restarts, deploys,
+  or sleeps. This is temporary transport, not a backup service.
+- Access expiry is immediate on new requests; disk cleanup normally runs every
+  30 seconds. An already-started download can complete after expiry.
+- Only use a dedicated `DROPLINK_STORAGE_DIR`. Startup cleans owned orphan blobs;
+  never point it at personal files. Hard-crash multipart spools may require OS cleanup.
+- Free hosting can sleep and has shared usage limits. A cold server may need about
+  a minute before a retry works. No paid plan or overage has been authorized.
+- Behind a proxy, callers may share the peer's admission budget. Forwarded IP
+  headers are deliberately not trusted. This MVP is not designed for heavy traffic.
+- Automated tests do not prove real-phone camera behavior, layout, native download
+  dialogs, screen readers, or production HTTPS/WSS. Recorded gaps are explicit in
+  each day's verification file. No comprehensive security audit is claimed.
 
 ## What I learned
 
-Day 1 learning notes to review by tracing the running application:
+This project was built with AI assistance. These are topics to study and explain,
+not a claim that I independently wrote or mastered every component:
 
-- A frontend presents data; the backend controls the API and will enforce room rules.
-- An HTTP request reaches a Java controller and returns a JSON response.
-- React state controls loading, success, and error messages.
-- A Vite proxy gives the browser one local origin during development.
-- A Maven Wrapper and npm lockfile make setup more reproducible.
-- A successful build, an API test, and a browser check prove different things.
+1. React state and HTTP controllers connect the interface to server rules.
+2. A join code admits a device; a separate member token authorizes its requests.
+3. Expiry checks and synchronization protect access and concurrent limits.
+4. QR codes encode URLs; the URL still needs a reachable network address.
+5. Streaming files, random storage IDs, quotas, and cleanup bound temporary storage.
+6. WebSocket notifications need authentication, heartbeats, and reconnect reconciliation.
+7. Focus, selection, and error feedback should survive background refreshes.
+8. Regression tests, clean builds, browser checks, and real deployment prove different things.
+9. A production build bundles assets; proxy origin handling and temporary-disk lifecycle
+   must be explicit before deployment.
 
-Day 2 adds these learning topics:
+## Lessons and daily Git workflow
 
-- A join code admits a session; its bearer token authorizes later requests.
-- Checking expiry on access prevents a late cleanup task from extending access.
-- Synchronization keeps concurrent capacity checks and inserts consistent.
-- A saved browser session must be revalidated after reload or backend restart.
-- Simulated DOM tests, HTTP tests, and real-device checks prove different things.
+[Day 1](docs/day-01.md) · [Day 2](docs/day-02.md) · [Day 3](docs/day-03.md) ·
+[Day 4](docs/day-04.md) · [Day 5](docs/day-05.md) · [Day 6](docs/day-06.md) ·
+[Day 7](docs/day-07.md) · [Day 8](docs/day-08.md)
 
-Day 3 adds these learning topics:
+Each lesson includes what/why, code explanations, run/test/debug instructions,
+one commit message, and a GitHub summary. The user replaced the daily schedule with immediate completion on September 24;
+see [remaining work](docs/remaining-work.md).
+After a confirmed upload, update a clean clone with:
 
-- A QR code encodes a join URL, not a file or a member access token.
-- URL fragments stay out of the initial HTTP request but are not encrypted.
-- Explicit joining prevents page opening from creating duplicate memberships.
-- A valid QR payload and a reachable network address are separate requirements.
-
-Day 4 adds these learning topics:
-
-- Multipart requests carry file bytes; JSON carries file metadata.
-- A random storage ID prevents a filename from becoming a server path.
-- Streaming copies bound memory use; atomic quota checks prevent concurrent overflow.
-- Authorization before parsing saves resources; rechecking after copying handles expiry.
-- HTTP access expiry and physical disk deletion are separate events.
-- File uploads cannot be blindly retried after a network interruption.
-
-This project is being built with AI assistance. These notes describe lesson topics,
-not a claim that I independently wrote or mastered every component. I will add my
-own explanations and real debugging lessons after each day.
+```powershell
+git switch main
+git pull --ff-only origin main
+```
 
 ## Future work
 
-Complete the remaining MVP milestones first. Only then consider transfer progress,
-resumable uploads, end-to-end encryption, or storage shared by multiple backend
-instances. There is no need for these extras in the first build.
-
-## GitHub
-
-Repository: [shaileshsalve-7/droplink](https://github.com/shaileshsalve-7/droplink).
-
-Clone the project to start from the GitHub history:
-
-```powershell
-git clone https://github.com/shaileshsalve-7/droplink.git
-cd droplink
-```
-
-Daily commands and implementation commit messages are in [Day 1](docs/day-01.md)
-[Day 2](docs/day-02.md), [Day 3](docs/day-03.md), and [Day 4](docs/day-04.md).
-The earlier downloadable Git bundle is an offline checkpoint; use a fresh GitHub
-clone for future work so your local history matches the published repository.
+Finish actual host and phone verification first. Later possibilities include
+transfer progress, resumable uploads, end-to-end encryption, stronger abuse
+controls, and shared storage for multiple instances. These are not MVP features.
 
 ## References
 
-- [Spring Boot system requirements](https://docs.spring.io/spring-boot/system-requirements.html)
-- [Vite setup guide](https://vite.dev/guide/)
-- [React learning guide](https://react.dev/learn)
-- [Spring Initializr](https://start.spring.io/) — official Maven Wrapper scaffold.
-
-- [Spring file upload guide](https://spring.io/guides/gs/uploading-files/)
+[React](https://react.dev/learn) · [Vite](https://vite.dev/guide/) ·
+[Spring Boot](https://docs.spring.io/spring-boot/system-requirements.html) ·
+[Spring file uploads](https://spring.io/guides/gs/uploading-files/) ·
+[Spring WebSockets](https://docs.spring.io/spring-framework/reference/web/websocket/server.html) ·
+[Render deployment references](docs/deployment.md)

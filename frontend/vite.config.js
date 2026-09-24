@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       proxy: {
         // A relative URL works from both a laptop and a phone on the same LAN.
+        '/api/live': { target: env.API_PROXY_TARGET || 'http://127.0.0.1:8080', ws: true },
         '/api': { target: env.API_PROXY_TARGET || 'http://127.0.0.1:8080' },
       },
     },

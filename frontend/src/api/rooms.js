@@ -1,3 +1,5 @@
+import { apiUrl } from './config.js';
+
 export class RoomApiError extends Error {
   constructor(message, code = 'NETWORK_ERROR') { super(message); this.code = code; }
 }
@@ -22,7 +24,7 @@ async function request(path, { method = 'GET', body, membership, signal } = {}) 
   if (membership) headers.Authorization = `Bearer ${membership.memberToken}`;
   let response;
   try {
-    response = await fetch(`/api/rooms${path}`, {
+    response = await fetch(apiUrl(`/api/rooms${path}`), {
       method, headers, body: body ? JSON.stringify(body) : undefined, cache: 'no-store',
       // No automatic POST retries: a lost response may already have created a member.
       signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(10000)]) : AbortSignal.timeout(10000),
@@ -41,7 +43,8 @@ async function request(path, { method = 'GET', body, membership, signal } = {}) 
       INVALID_CODE: 'Enter a valid eight-character room code.',
       INVALID_REQUEST: 'Check the room code and try again.',
     };
-    throw new RoomApiError(messages[data.code] || 'The request failed. Please try again.', data.code || 'REQUEST_FAILED');
+    const code = typeof data?.code === 'string' && Object.hasOwn(messages, data.code) ? data.code : 'REQUEST_FAILED';
+    throw new RoomApiError(messages[code] || 'The request failed. Please try again.', code);
   }
   if (response.status === 204) return null;
   try { return await response.json(); }

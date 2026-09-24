@@ -68,4 +68,18 @@ class FileEndpointTest {
         assertThat(malformed.statusCode()).isEqualTo(400);
         assertThat(new String(malformed.body(), StandardCharsets.UTF_8)).contains("INVALID_UPLOAD");
     }
+    @Test void multipartOnOtherRoutesIsRejectedBeforeParsing() throws Exception {
+        var host = rooms.create();
+        String files = "/api/rooms/" + host.room().id() + "/files";
+        for (String path : new String[]{"/api/rooms", "/api/rooms/join", files + "/", files + "/" + UUID.randomUUID(), "/api/health", "/unknown"}) {
+            var response = request("POST", path, host.memberToken(), multipart(new byte[]{1}), "multipart/form-data; boundary=drop-test");
+            assertThat(response.statusCode()).as(path).isEqualTo(415);
+            assertThat(new String(response.body(), StandardCharsets.UTF_8)).contains("INVALID_UPLOAD");
+        }
+        // Even an unparsable body must stop at the filter, not multipart parsing.
+        var malformed = request("GET", files, host.memberToken(), new byte[]{1}, "multipart/form-data");
+        assertThat(malformed.statusCode()).isEqualTo(415);
+        assertThat(new String(malformed.body(), StandardCharsets.UTF_8)).contains("INVALID_UPLOAD");
+        assertThat(malformed.headers().firstValue("cache-control")).contains("no-store");
+    }
 }

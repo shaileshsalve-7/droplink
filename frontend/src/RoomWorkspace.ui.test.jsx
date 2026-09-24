@@ -9,6 +9,8 @@ vi.mock('./api/files.js', async importOriginal => ({
   ...await importOriginal(), listFiles: async () => [],
 }));
 
+vi.mock('./api/live.js', () => ({ connectRoom: () => () => {} }));
+
 const room = { id: 'ea013e60-fb65-4717-bb0c-a1a500edb7bd', code: 'ABCD2345', expiresAt: '2026-09-22T12:30:00Z', serverTime: '2026-09-22T12:00:00Z', memberCount: 1, maxMembers: 8 };
 const member = { room, memberToken: 'a'.repeat(43) };
 const reply = (body, status = 200) => new Response(JSON.stringify(body), { status });

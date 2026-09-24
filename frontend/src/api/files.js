@@ -1,4 +1,5 @@
 import { RoomApiError } from './rooms.js';
+import { apiUrl } from './config.js';
 
 export const MAX_FILE_BYTES = 10 * 1024 * 1024;
 export function validateFile(file) {
@@ -17,7 +18,7 @@ function validFile(file) {
 async function request(membership, suffix, { method = 'GET', body, signal } = {}) {
   let response;
   try {
-    response = await fetch(`/api/rooms/${membership.room.id}/files${suffix}`, {
+    response = await fetch(apiUrl(`/api/rooms/${membership.room.id}/files${suffix}`), {
       method, body, cache: 'no-store', headers: { Authorization: `Bearer ${membership.memberToken}` },
       // Let the browser supply FormData's boundary. Never put a member token in a URL.
       signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(120000)]) : AbortSignal.timeout(120000),
@@ -39,14 +40,15 @@ async function request(membership, suffix, { method = 'GET', body, signal } = {}
       UPLOAD_BUSY: 'Uploads are busy. Try again shortly.',
       RATE_LIMITED: 'Too many attempts. Wait one minute and try again.',
     };
-    throw new RoomApiError(messages[data.code] || (response.status === 413 ? messages.FILE_TOO_LARGE : 'File request failed. Try again.'), data.code || 'REQUEST_FAILED');
+    const code = typeof data?.code === 'string' && Object.hasOwn(messages, data.code) ? data.code : 'REQUEST_FAILED';
+    throw new RoomApiError(messages[code] || (response.status === 413 ? messages.FILE_TOO_LARGE : 'File request failed. Try again.'), code);
   }
   return response;
 }
 
-async function json(response) {
+async function json(response, message = 'Unexpected file response.') {
   try { return await response.json(); }
-  catch { throw new RoomApiError('Unexpected file response.', 'INVALID_RESPONSE'); }
+  catch { throw new RoomApiError(message, 'INVALID_RESPONSE'); }
 }
 
 export async function listFiles(membership, signal) {
@@ -61,7 +63,10 @@ export async function uploadFile(membership, file, signal) {
   if (error) throw new RoomApiError(error, 'INVALID_FILE');
   const body = new FormData(); body.append('file', file);
   // No automatic retries: an interrupted response may hide a completed upload.
-  const result = await json(await request(membership, '', { method: 'POST', body, signal }));
+  // A failed response-body read is just as uncertain as losing the connection
+  // before headers. The server may already have committed this upload.
+  const result = await json(await request(membership, '', { method: 'POST', body, signal }),
+    'Unexpected upload response. Refresh files before retrying.');
   if (!validFile(result)) throw new RoomApiError('Unexpected upload response. Refresh files before retrying.', 'INVALID_RESPONSE');
   return result;
 }

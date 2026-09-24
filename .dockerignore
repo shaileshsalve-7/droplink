@@ -1,0 +1,17 @@
+**/.git
+**/node_modules
+**/dist
+**/target
+**/.env
+**/.env.*
+**/*.log
+**/.storage
+**/.idea
+**/.vscode
+**/.attach_pid*
+test-results
+playwright-report
+coverage
+docs
+README.md
+AGENTS.md
