@@ -1,19 +1,12 @@
-# Final release work
+# Release status — September 25, 2026
 
-The user requested completion now with Netlify on September 24, 2026, replacing
-the earlier daily publication dates. The previous daily automation is disabled.
-Days 5–8 are implemented locally; publish their tested contents together with the
-Netlify integration after verifying the existing public Day 4 parent.
+The main DropLink release is on GitHub. The React frontend is live on Netlify and
+the Java backend is live on Render's free, single-instance plan. Public health,
+room creation/joining, both-direction API file transfers, CORS, WSS authentication,
+and the browser's live connection have been verified. See
+[`verification-release.md`](verification-release.md) for evidence.
 
-Remaining release gates:
-
-1. Confirm frontend/backend production builds and exact-origin CORS/WS tests.
-2. Publish the complete tested release to GitHub without force or lost user work.
-3. Deploy the Java Docker backend on free Render compute and React on Netlify.
-4. Verify public health, create/join, transfers both ways, notifications and reconnect.
-5. Capture genuine screenshots from the live UI with harmless demo files; revoke
-   demo rooms before publishing images containing invitation codes.
-6. Record actual URLs, test evidence, and any unverified physical-device checks.
-
-Use docs/deployment.md. No new feature work, paid upgrades, or claims of successful
-hosting based solely on source publication are authorized or appropriate.
+Remaining verification is limited to physical-phone camera behavior, native
+browser file dialogs, and assistive-technology checks. Fresh local Java tests could
+not complete because this Windows/JDK 26 environment denied access while `javac`
+closed a Spring dependency archive. No feature or hosting deployment gate remains.

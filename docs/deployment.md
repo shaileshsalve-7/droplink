@@ -59,20 +59,16 @@ threads are bounded. This is not a measured production capacity guarantee.
 
 ## Backend deployment
 
-Publish the tested source to GitHub first. Create a Render Blueprint from
-`render.yaml` or one Docker web service using repository root and `./Dockerfile`.
-Confirm the plan is Free and only one instance exists. Keep automatic deploy off
-unless deliberately enabling it later. Set the exact frontend origin as above;
-`render.yaml` includes it. The health check is `/api/health`.
+The Docker web service is live at `https://droplink-u513.onrender.com` on the
+free Singapore plan with one instance and no persistent disk. Its health check is
+`/api/health`; `DROPLINK_PUBLIC_ORIGIN` is the exact Netlify origin above.
+`VITE_API_BASE_URL` is configured to the backend HTTPS origin and requires a new
+Netlify build if the backend hostname changes.
 
-The connected Render tool currently describes Docker creation as unsupported;
-the Dashboard/Blueprint workflow may require sign-in. Do not create duplicate
-services or change unrelated apps. Do not add a payment method, paid disk, or
-paid compute without consent. Free hours are shared with existing workspace apps.
-
-Wait for the Docker build and health check to pass. Read the assigned HTTPS URL
-from the service record, then set it as Netlify's `VITE_API_BASE_URL` build variable.
-Do not guess the backend subdomain or deploy the frontend against a placeholder.
+Render automatic deploys are off. After a reviewed source change, deploy the
+existing `droplink` service from the Render Dashboard and wait for its health
+check. Do not create a duplicate service or change unrelated services. Free hours
+are shared across the workspace; no paid plan, disk, or compute is configured.
 
 ## Frontend deployment
 

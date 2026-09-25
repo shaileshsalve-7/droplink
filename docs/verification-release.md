@@ -16,34 +16,40 @@ replacing the previous daily release schedule. The daily automation is disabled.
 
 ## Results
 
-Frontend: 32 Node tests and 38 React/jsdom tests passed; build passed.
-Backend: 42 Java tests passed, including exact-origin API preflights, rejected
-unrelated origins, and token-required file access. Production packaging passed.
-The production-JAR smoke verified bundled assets, transfers in both directions,
-notifications, isolation, reconnect, revocation, expiry and server restart.
-Total: 112 automated tests, plus the local live-production workflow.
-Netlify project created with id `6b89c276-3527-449c-8091-94096486c397`.
-Frontend deployment succeeded September 25, 2026:
-[Open the Netlify frontend](https://droplink-shailesh.netlify.app/).
-Netlify production deploy: 6ab5fef67b500f99c9642650, state ready, published at
-2026-09-25T04:56:33Z. The real page was opened in the cloud browser and its landing
-screen verified and captured in [the deployment screenshot](netlify-frontend-20260925.jpg). No active room or
-member credentials appear in that screenshot.
+Frontend: all 32 Node API tests and 38 React/jsdom tests passed; the production
+build passed. `npm ci` reported zero vulnerabilities.
 
-The backend is NOT deployed. Render dashboard remains signed out; the secure
-sign-in attempt timed out. The frontend currently has no external API origin, so
-room creation, joining, uploads and downloads are unavailable on the public site.
-A live page is not a completed sharing service. Finish Render sign-in, deploy the
-existing Docker backend, set VITE_API_BASE_URL on Netlify, redeploy, then verify
-both-direction transfer and WSS. No production transfer success is claimed.
+Render backend: service `droplink` is live at
+[https://droplink-u513.onrender.com](https://droplink-u513.onrender.com), on the
+free Singapore plan with one instance. Deploy `dep-dar9ckrncjis73ckldi0` is live
+from GitHub commit `e9219a17d62cc4f537988782d63e53265cb299c7`. The public
+`/api/health` check returned HTTP 200 and `status: UP`.
 
-Source release was published and independently fetched/verified as GitHub commit
-4dd3fd8d3681352a8a1a251ea8535a54579015b2, exact tree
-7817e546dff6c00048862aa7494be419a942aa75. The September 25 documentation update adds
-the live frontend link and genuine screenshot to the repository, with the backend
-deployment blocker stated explicitly.
+Netlify frontend: [https://droplink-shailesh.netlify.app](https://droplink-shailesh.netlify.app)
+returned HTTP 200. `VITE_API_BASE_URL` is set to the Render HTTPS origin, and the
+published JavaScript bundle contains that origin. Production deploy
+`6ab69a98115da82e59af4f48` is ready and published at `2026-09-25T16:00:39Z`.
+The live browser created a room and showed “Live updates connected”; the temporary
+session was then left.
 
-Physical phone/camera and assistive-technology checks remain unverified.
+Public API checks passed: exact-origin CORS preflight, room creation and joining,
+multipart uploads by both members, file listing, and exact downloads in both
+directions. Public WSS token authentication returned `ready`. A cleanup check
+confirmed that both temporary memberships return HTTP 204 on leave.
+
+Fresh local Java verification is incomplete. Maven main-source compilation
+completed, but test compilation/package failed under local JDK 26.0.1 because
+`javac` received `java.nio.file.AccessDeniedException` while closing the
+`spring-boot-web-server` dependency archive. This is an environment-level file
+access failure; it does not establish a Java test result. The earlier 42-test
+backend result is historical and was not repeated in this session.
+
+The existing screenshot shows the landing page only. Physical phone/camera,
+assistive-technology, and real-browser file-picker/download-dialog checks remain
+unverified.
+
+The live Render service runs GitHub commit `e9219a17d62cc4f537988782d63e53265cb299c7`;
+the earlier feature release was `4dd3fd8d3681352a8a1a251ea8535a54579015b2`.
 
 ## GitHub summary
 

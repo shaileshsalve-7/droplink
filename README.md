@@ -4,11 +4,12 @@ Temporary file sharing between phone and laptop, without cluttering a chat.
 
 **Live frontend:** [droplink-shailesh.netlify.app](https://droplink-shailesh.netlify.app/)
 
-**Status:** The frontend is deployed on Netlify. The Java backend still needs
-deployment, so public room creation, joining, uploads and downloads are not yet
-available. The sharing MVP and Netlify integration are implemented and tested
-locally. See [release verification](docs/verification-release.md) for completed
-checks and remaining deployment work.
+**Status:** DropLink is live end to end. The React frontend runs on Netlify and
+the Java API runs on Render. Public room creation, joining, uploads, downloads,
+and live updates are working. Open the [frontend](https://droplink-shailesh.netlify.app/)
+or check [backend health](https://droplink-u513.onrender.com/api/health). Render's
+free service can sleep; rooms and files are temporary and disappear on restart.
+See [release verification](docs/verification-release.md) for current checks.
 
 ## Problem and solution
 
@@ -146,10 +147,11 @@ upload response may hide a completed upload: refresh files before retrying.
 
 ![DropLink frontend deployed on Netlify, September 25, 2026](docs/netlify-frontend-20260925.jpg)
 
-Netlify project: `droplink-shailesh`. The Java server needs a separate Docker host;
-Netlify cannot run this long-lived Spring Boot/WebSocket service. `netlify.toml`
-builds `frontend/`; set its `VITE_API_BASE_URL` to the assigned backend HTTPS origin.
-Set the backend's `DROPLINK_PUBLIC_ORIGIN` to the exact frontend origin. CORS
+Netlify project: `droplink-shailesh`. The Java service is deployed on Render at
+`https://droplink-u513.onrender.com` (free plan, one instance, Singapore).
+`VITE_API_BASE_URL` is set to that HTTPS origin, and `DROPLINK_PUBLIC_ORIGIN` is
+the exact frontend origin, `https://droplink-shailesh.netlify.app`. `netlify.toml`
+builds `frontend/`; `render.yaml` documents the backend configuration. CORS
 preflights run before bearer-token checks; actual protected requests still require
 a member token. Unknown browser origins are rejected.
 
