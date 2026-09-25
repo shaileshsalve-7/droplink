@@ -224,3 +224,4 @@ controls, and shared storage for multiple instances. These are not MVP features.
 [Spring file uploads](https://spring.io/guides/gs/uploading-files/) ·
 [Spring WebSockets](https://docs.spring.io/spring-framework/reference/web/websocket/server.html) ·
 [Render deployment references](docs/deployment.md)
+<!-- Netlify redeploy trigger: 2026-09-25 -->
