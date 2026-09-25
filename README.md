@@ -2,9 +2,13 @@
 
 Temporary file sharing between phone and laptop, without cluttering a chat.
 
-**Status:** The sharing MVP and Netlify integration are implemented. Release is
-in progress at the user's request; the earlier September 28 schedule is superseded.
-See [release verification](docs/verification-release.md) for tested and pending gates.
+**Live frontend:** [droplink-shailesh.netlify.app](https://droplink-shailesh.netlify.app/)
+
+**Status:** The frontend is deployed on Netlify. The Java backend still needs
+deployment, so public room creation, joining, uploads and downloads are not yet
+available. The sharing MVP and Netlify integration are implemented and tested
+locally. See [release verification](docs/verification-release.md) for completed
+checks and remaining deployment work.
 
 ## Problem and solution
 
@@ -139,6 +143,8 @@ upload response may hide a completed upload: refresh files before retrying.
 [deployment.md](docs/deployment.md) has Windows/Docker/Render commands and troubleshooting.
 
 ## Deployment and screenshots
+
+![DropLink frontend deployed on Netlify, September 25, 2026](docs/netlify-frontend-20260925.jpg)
 
 Netlify project: `droplink-shailesh`. The Java server needs a separate Docker host;
 Netlify cannot run this long-lived Spring Boot/WebSocket service. `netlify.toml`
